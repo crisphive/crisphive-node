@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * CrispHive Developer API
- * Public REST API for integrating CrispHive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
+ * Crisphive Developer API
+ * Public REST API for integrating Crisphive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
  *
  * The version of the OpenAPI document: 1.0
  * 
@@ -22,11 +22,27 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CreateTechnician200Response } from '../models';
+// @ts-ignore
 import type { GetTechnician200Response } from '../models';
 // @ts-ignore
 import type { ListTechnicians200Response } from '../models';
 // @ts-ignore
+import type { ReplaceTechnicianServiceAreas200Response } from '../models';
+// @ts-ignore
 import type { ResponseEnvelope } from '../models';
+// @ts-ignore
+import type { TechnicianBuddiesRequest } from '../models';
+// @ts-ignore
+import type { TechnicianCreateRequest } from '../models';
+// @ts-ignore
+import type { TechnicianLeadsRequest } from '../models';
+// @ts-ignore
+import type { TechnicianServiceAreasRequest } from '../models';
+// @ts-ignore
+import type { TechnicianUpdateRequest } from '../models';
+// @ts-ignore
+import type { TechnicianVehiclesRequest } from '../models';
 /**
  * TechnicianApi - axios parameter creator
  * @export
@@ -34,7 +50,89 @@ import type { ResponseEnvelope } from '../models';
 export const TechnicianApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Returns details for a specific technician
+         * Creates a technician membership under the current business. If the phone/email matches an existing user, their account is linked. Otherwise a new user identity is created (no invite email — login is passwordless later). Either way the membership starts active. If the technician was previously removed (deactive) they are reactivated instead. Owner/Administrator groups cannot be assigned via API key, and not at all in sandbox mode.  Optional relations (all validated; any missing id → 404 TECHNICIAN_NOT_FOUND with `missing_ids`): `buddy_ids` sets this technician\'s buddy list (use when creating a lead); `lead_ids` adds this technician as a buddy of each named lead (use when creating a buddy — the buddy-side way to attach the same lead↔buddy relation); `service_area_ids` assigns the technician to those service areas.  `start_location_type=office` snapshots the business address + coordinates into the technician at create time; `address`, `start_location_lat`, `start_location_long` in the body are ignored. Requires the business to have coordinates set (else 400 BUSINESS_LOCATION_MISSING). `start_location_type=home` (or empty) uses the address + coordinates from the body.
+         * @summary Add a technician
+         * @param {TechnicianCreateRequest} technicianCreateRequest Technician details
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTechnician: async (technicianCreateRequest: TechnicianCreateRequest, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'technicianCreateRequest' is not null or undefined
+            assertParamExists('createTechnician', 'technicianCreateRequest', technicianCreateRequest)
+            const localVarPath = `/technicians`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(technicianCreateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Soft-removes a technician from the business by setting status to deactive
+         * @summary Remove a technician
+         * @param {string} id Technician ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTechnician: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('deleteTechnician', 'id', id)
+            const localVarPath = `/technicians/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Returns one technician\'s full profile: contact info, employment status, assignment tier, skills/qualifications, buddy (crew) relations and assigned vehicles — the dispatch-ready view of a field worker.
          * @summary Get a technician
          * @param {string} id Technician ID
          * @param {*} [options] Override http request option.
@@ -72,7 +170,7 @@ export const TechnicianApiAxiosParamCreator = function (configuration?: Configur
             };
         },
         /**
-         * Returns a paginated list of technicians for the current business
+         * Returns the field workforce roster: paginated technicians (field workers / engineers) with status, assignment tier (lead, buddy, float), skills and crew relations — the people the dispatch engine schedules onto jobs. Discover the `preferred_technician_id` accepted on customer records here. Supports the `since` cursor for incremental workforce sync.
          * @summary List technicians
          * @param {number} [page] Page number (default 1)
          * @param {number} [limit] Items per page (default 15, max 1000)
@@ -140,6 +238,226 @@ export const TechnicianApiAxiosParamCreator = function (configuration?: Configur
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Overwrites the technician\'s buddy list with the provided set of technician IDs. Sending an empty list clears all buddies. Each buddy ID must be an active technician of the same business; a technician cannot be their own buddy.
+         * @summary Replace a technician\'s buddies
+         * @param {string} id Technician ID
+         * @param {TechnicianBuddiesRequest} technicianBuddiesRequest Buddy IDs
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        replaceTechnicianBuddies: async (id: string, technicianBuddiesRequest: TechnicianBuddiesRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('replaceTechnicianBuddies', 'id', id)
+            // verify required parameter 'technicianBuddiesRequest' is not null or undefined
+            assertParamExists('replaceTechnicianBuddies', 'technicianBuddiesRequest', technicianBuddiesRequest)
+            const localVarPath = `/technicians/{id}/buddies`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(technicianBuddiesRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Sets the full set of leads this buddy belongs to (many-to-many favorites). Replace-semantics — lead_ids is the complete new list; [] clears every leader. Managed by business staff.
+         * @summary Replace a buddy\'s leaders (buddy side)
+         * @param {string} id Buddy technician ID
+         * @param {TechnicianLeadsRequest} technicianLeadsRequest Lead IDs payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        replaceTechnicianLeads: async (id: string, technicianLeadsRequest: TechnicianLeadsRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('replaceTechnicianLeads', 'id', id)
+            // verify required parameter 'technicianLeadsRequest' is not null or undefined
+            assertParamExists('replaceTechnicianLeads', 'technicianLeadsRequest', technicianLeadsRequest)
+            const localVarPath = `/technicians/{id}/leads`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(technicianLeadsRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Overwrites the technician\'s service-area assignments with the provided set of service area IDs. Sending an empty list clears all. Each service area ID must belong to the same business — any missing id → 404 SERVICE_AREA_NOT_FOUND with `missing_ids` and no writes. The resolved set is returned and also embedded as `service_areas` in the technician GET/list response. Managed by business staff (Booking Coordinator), not tech self-service.
+         * @summary Replace a technician\'s service areas
+         * @param {string} id Technician ID
+         * @param {TechnicianServiceAreasRequest} technicianServiceAreasRequest Service area IDs
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        replaceTechnicianServiceAreas: async (id: string, technicianServiceAreasRequest: TechnicianServiceAreasRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('replaceTechnicianServiceAreas', 'id', id)
+            // verify required parameter 'technicianServiceAreasRequest' is not null or undefined
+            assertParamExists('replaceTechnicianServiceAreas', 'technicianServiceAreasRequest', technicianServiceAreasRequest)
+            const localVarPath = `/technicians/{id}/service-areas`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(technicianServiceAreasRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Overwrites the technician\'s vehicle list with the provided set of vehicle IDs (the vehicles this technician uses). Sending an empty list clears all. Each vehicle ID must belong to the same business. The list is also embedded as `vehicle_ids` in the technician GET/list response.
+         * @summary Replace a technician\'s vehicles
+         * @param {string} id Technician ID
+         * @param {TechnicianVehiclesRequest} technicianVehiclesRequest Vehicle IDs
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        replaceTechnicianVehicles: async (id: string, technicianVehiclesRequest: TechnicianVehiclesRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('replaceTechnicianVehicles', 'id', id)
+            // verify required parameter 'technicianVehiclesRequest' is not null or undefined
+            assertParamExists('replaceTechnicianVehicles', 'technicianVehiclesRequest', technicianVehiclesRequest)
+            const localVarPath = `/technicians/{id}/vehicles`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(technicianVehiclesRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Updates mutable technician profile fields. `start_location_type=office` re-snapshots the current business address + coordinates (body `address`/`start_location_lat`/`start_location_long` ignored; requires business coordinates, else 400 BUSINESS_LOCATION_MISSING). `start_location_type=home` (or empty) uses the address + coordinates from the body.
+         * @summary Update a technician
+         * @param {string} id Technician ID
+         * @param {TechnicianUpdateRequest} technicianUpdateRequest Technician details
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateTechnician: async (id: string, technicianUpdateRequest: TechnicianUpdateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateTechnician', 'id', id)
+            // verify required parameter 'technicianUpdateRequest' is not null or undefined
+            assertParamExists('updateTechnician', 'technicianUpdateRequest', technicianUpdateRequest)
+            const localVarPath = `/technicians/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(technicianUpdateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -151,7 +469,34 @@ export const TechnicianApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = TechnicianApiAxiosParamCreator(configuration)
     return {
         /**
-         * Returns details for a specific technician
+         * Creates a technician membership under the current business. If the phone/email matches an existing user, their account is linked. Otherwise a new user identity is created (no invite email — login is passwordless later). Either way the membership starts active. If the technician was previously removed (deactive) they are reactivated instead. Owner/Administrator groups cannot be assigned via API key, and not at all in sandbox mode.  Optional relations (all validated; any missing id → 404 TECHNICIAN_NOT_FOUND with `missing_ids`): `buddy_ids` sets this technician\'s buddy list (use when creating a lead); `lead_ids` adds this technician as a buddy of each named lead (use when creating a buddy — the buddy-side way to attach the same lead↔buddy relation); `service_area_ids` assigns the technician to those service areas.  `start_location_type=office` snapshots the business address + coordinates into the technician at create time; `address`, `start_location_lat`, `start_location_long` in the body are ignored. Requires the business to have coordinates set (else 400 BUSINESS_LOCATION_MISSING). `start_location_type=home` (or empty) uses the address + coordinates from the body.
+         * @summary Add a technician
+         * @param {TechnicianCreateRequest} technicianCreateRequest Technician details
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createTechnician(technicianCreateRequest: TechnicianCreateRequest, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateTechnician200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createTechnician(technicianCreateRequest, idempotencyKey, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TechnicianApi.createTechnician']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Soft-removes a technician from the business by setting status to deactive
+         * @summary Remove a technician
+         * @param {string} id Technician ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteTechnician(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteTechnician(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TechnicianApi.deleteTechnician']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Returns one technician\'s full profile: contact info, employment status, assignment tier, skills/qualifications, buddy (crew) relations and assigned vehicles — the dispatch-ready view of a field worker.
          * @summary Get a technician
          * @param {string} id Technician ID
          * @param {*} [options] Override http request option.
@@ -164,7 +509,7 @@ export const TechnicianApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Returns a paginated list of technicians for the current business
+         * Returns the field workforce roster: paginated technicians (field workers / engineers) with status, assignment tier (lead, buddy, float), skills and crew relations — the people the dispatch engine schedules onto jobs. Discover the `preferred_technician_id` accepted on customer records here. Supports the `since` cursor for incremental workforce sync.
          * @summary List technicians
          * @param {number} [page] Page number (default 1)
          * @param {number} [limit] Items per page (default 15, max 1000)
@@ -182,6 +527,76 @@ export const TechnicianApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['TechnicianApi.listTechnicians']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Overwrites the technician\'s buddy list with the provided set of technician IDs. Sending an empty list clears all buddies. Each buddy ID must be an active technician of the same business; a technician cannot be their own buddy.
+         * @summary Replace a technician\'s buddies
+         * @param {string} id Technician ID
+         * @param {TechnicianBuddiesRequest} technicianBuddiesRequest Buddy IDs
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async replaceTechnicianBuddies(id: string, technicianBuddiesRequest: TechnicianBuddiesRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.replaceTechnicianBuddies(id, technicianBuddiesRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TechnicianApi.replaceTechnicianBuddies']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Sets the full set of leads this buddy belongs to (many-to-many favorites). Replace-semantics — lead_ids is the complete new list; [] clears every leader. Managed by business staff.
+         * @summary Replace a buddy\'s leaders (buddy side)
+         * @param {string} id Buddy technician ID
+         * @param {TechnicianLeadsRequest} technicianLeadsRequest Lead IDs payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async replaceTechnicianLeads(id: string, technicianLeadsRequest: TechnicianLeadsRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.replaceTechnicianLeads(id, technicianLeadsRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TechnicianApi.replaceTechnicianLeads']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Overwrites the technician\'s service-area assignments with the provided set of service area IDs. Sending an empty list clears all. Each service area ID must belong to the same business — any missing id → 404 SERVICE_AREA_NOT_FOUND with `missing_ids` and no writes. The resolved set is returned and also embedded as `service_areas` in the technician GET/list response. Managed by business staff (Booking Coordinator), not tech self-service.
+         * @summary Replace a technician\'s service areas
+         * @param {string} id Technician ID
+         * @param {TechnicianServiceAreasRequest} technicianServiceAreasRequest Service area IDs
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async replaceTechnicianServiceAreas(id: string, technicianServiceAreasRequest: TechnicianServiceAreasRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ReplaceTechnicianServiceAreas200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.replaceTechnicianServiceAreas(id, technicianServiceAreasRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TechnicianApi.replaceTechnicianServiceAreas']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Overwrites the technician\'s vehicle list with the provided set of vehicle IDs (the vehicles this technician uses). Sending an empty list clears all. Each vehicle ID must belong to the same business. The list is also embedded as `vehicle_ids` in the technician GET/list response.
+         * @summary Replace a technician\'s vehicles
+         * @param {string} id Technician ID
+         * @param {TechnicianVehiclesRequest} technicianVehiclesRequest Vehicle IDs
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async replaceTechnicianVehicles(id: string, technicianVehiclesRequest: TechnicianVehiclesRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.replaceTechnicianVehicles(id, technicianVehiclesRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TechnicianApi.replaceTechnicianVehicles']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Updates mutable technician profile fields. `start_location_type=office` re-snapshots the current business address + coordinates (body `address`/`start_location_lat`/`start_location_long` ignored; requires business coordinates, else 400 BUSINESS_LOCATION_MISSING). `start_location_type=home` (or empty) uses the address + coordinates from the body.
+         * @summary Update a technician
+         * @param {string} id Technician ID
+         * @param {TechnicianUpdateRequest} technicianUpdateRequest Technician details
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updateTechnician(id: string, technicianUpdateRequest: TechnicianUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateTechnician(id, technicianUpdateRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TechnicianApi.updateTechnician']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -193,7 +608,27 @@ export const TechnicianApiFactory = function (configuration?: Configuration, bas
     const localVarFp = TechnicianApiFp(configuration)
     return {
         /**
-         * Returns details for a specific technician
+         * Creates a technician membership under the current business. If the phone/email matches an existing user, their account is linked. Otherwise a new user identity is created (no invite email — login is passwordless later). Either way the membership starts active. If the technician was previously removed (deactive) they are reactivated instead. Owner/Administrator groups cannot be assigned via API key, and not at all in sandbox mode.  Optional relations (all validated; any missing id → 404 TECHNICIAN_NOT_FOUND with `missing_ids`): `buddy_ids` sets this technician\'s buddy list (use when creating a lead); `lead_ids` adds this technician as a buddy of each named lead (use when creating a buddy — the buddy-side way to attach the same lead↔buddy relation); `service_area_ids` assigns the technician to those service areas.  `start_location_type=office` snapshots the business address + coordinates into the technician at create time; `address`, `start_location_lat`, `start_location_long` in the body are ignored. Requires the business to have coordinates set (else 400 BUSINESS_LOCATION_MISSING). `start_location_type=home` (or empty) uses the address + coordinates from the body.
+         * @summary Add a technician
+         * @param {TechnicianApiCreateTechnicianRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createTechnician(requestParameters: TechnicianApiCreateTechnicianRequest, options?: RawAxiosRequestConfig): AxiosPromise<CreateTechnician200Response> {
+            return localVarFp.createTechnician(requestParameters.technicianCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Soft-removes a technician from the business by setting status to deactive
+         * @summary Remove a technician
+         * @param {TechnicianApiDeleteTechnicianRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTechnician(requestParameters: TechnicianApiDeleteTechnicianRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.deleteTechnician(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Returns one technician\'s full profile: contact info, employment status, assignment tier, skills/qualifications, buddy (crew) relations and assigned vehicles — the dispatch-ready view of a field worker.
          * @summary Get a technician
          * @param {TechnicianApiGetTechnicianRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -203,7 +638,7 @@ export const TechnicianApiFactory = function (configuration?: Configuration, bas
             return localVarFp.getTechnician(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * Returns a paginated list of technicians for the current business
+         * Returns the field workforce roster: paginated technicians (field workers / engineers) with status, assignment tier (lead, buddy, float), skills and crew relations — the people the dispatch engine schedules onto jobs. Discover the `preferred_technician_id` accepted on customer records here. Supports the `since` cursor for incremental workforce sync.
          * @summary List technicians
          * @param {TechnicianApiListTechniciansRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -212,8 +647,93 @@ export const TechnicianApiFactory = function (configuration?: Configuration, bas
         listTechnicians(requestParameters: TechnicianApiListTechniciansRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ListTechnicians200Response> {
             return localVarFp.listTechnicians(requestParameters.page, requestParameters.limit, requestParameters.status, requestParameters.assignmentTier, requestParameters.keyword, requestParameters.sort, requestParameters.since, options).then((request) => request(axios, basePath));
         },
+        /**
+         * Overwrites the technician\'s buddy list with the provided set of technician IDs. Sending an empty list clears all buddies. Each buddy ID must be an active technician of the same business; a technician cannot be their own buddy.
+         * @summary Replace a technician\'s buddies
+         * @param {TechnicianApiReplaceTechnicianBuddiesRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        replaceTechnicianBuddies(requestParameters: TechnicianApiReplaceTechnicianBuddiesRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.replaceTechnicianBuddies(requestParameters.id, requestParameters.technicianBuddiesRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Sets the full set of leads this buddy belongs to (many-to-many favorites). Replace-semantics — lead_ids is the complete new list; [] clears every leader. Managed by business staff.
+         * @summary Replace a buddy\'s leaders (buddy side)
+         * @param {TechnicianApiReplaceTechnicianLeadsRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        replaceTechnicianLeads(requestParameters: TechnicianApiReplaceTechnicianLeadsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.replaceTechnicianLeads(requestParameters.id, requestParameters.technicianLeadsRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Overwrites the technician\'s service-area assignments with the provided set of service area IDs. Sending an empty list clears all. Each service area ID must belong to the same business — any missing id → 404 SERVICE_AREA_NOT_FOUND with `missing_ids` and no writes. The resolved set is returned and also embedded as `service_areas` in the technician GET/list response. Managed by business staff (Booking Coordinator), not tech self-service.
+         * @summary Replace a technician\'s service areas
+         * @param {TechnicianApiReplaceTechnicianServiceAreasRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        replaceTechnicianServiceAreas(requestParameters: TechnicianApiReplaceTechnicianServiceAreasRequest, options?: RawAxiosRequestConfig): AxiosPromise<ReplaceTechnicianServiceAreas200Response> {
+            return localVarFp.replaceTechnicianServiceAreas(requestParameters.id, requestParameters.technicianServiceAreasRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Overwrites the technician\'s vehicle list with the provided set of vehicle IDs (the vehicles this technician uses). Sending an empty list clears all. Each vehicle ID must belong to the same business. The list is also embedded as `vehicle_ids` in the technician GET/list response.
+         * @summary Replace a technician\'s vehicles
+         * @param {TechnicianApiReplaceTechnicianVehiclesRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        replaceTechnicianVehicles(requestParameters: TechnicianApiReplaceTechnicianVehiclesRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.replaceTechnicianVehicles(requestParameters.id, requestParameters.technicianVehiclesRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Updates mutable technician profile fields. `start_location_type=office` re-snapshots the current business address + coordinates (body `address`/`start_location_lat`/`start_location_long` ignored; requires business coordinates, else 400 BUSINESS_LOCATION_MISSING). `start_location_type=home` (or empty) uses the address + coordinates from the body.
+         * @summary Update a technician
+         * @param {TechnicianApiUpdateTechnicianRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateTechnician(requestParameters: TechnicianApiUpdateTechnicianRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.updateTechnician(requestParameters.id, requestParameters.technicianUpdateRequest, options).then((request) => request(axios, basePath));
+        },
     };
 };
+
+/**
+ * Request parameters for createTechnician operation in TechnicianApi.
+ * @export
+ * @interface TechnicianApiCreateTechnicianRequest
+ */
+export interface TechnicianApiCreateTechnicianRequest {
+    /**
+     * Technician details
+     * @type {TechnicianCreateRequest}
+     * @memberof TechnicianApiCreateTechnician
+     */
+    readonly technicianCreateRequest: TechnicianCreateRequest
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+     * @type {string}
+     * @memberof TechnicianApiCreateTechnician
+     */
+    readonly idempotencyKey?: string
+}
+
+/**
+ * Request parameters for deleteTechnician operation in TechnicianApi.
+ * @export
+ * @interface TechnicianApiDeleteTechnicianRequest
+ */
+export interface TechnicianApiDeleteTechnicianRequest {
+    /**
+     * Technician ID
+     * @type {string}
+     * @memberof TechnicianApiDeleteTechnician
+     */
+    readonly id: string
+}
 
 /**
  * Request parameters for getTechnician operation in TechnicianApi.
@@ -286,6 +806,111 @@ export interface TechnicianApiListTechniciansRequest {
 }
 
 /**
+ * Request parameters for replaceTechnicianBuddies operation in TechnicianApi.
+ * @export
+ * @interface TechnicianApiReplaceTechnicianBuddiesRequest
+ */
+export interface TechnicianApiReplaceTechnicianBuddiesRequest {
+    /**
+     * Technician ID
+     * @type {string}
+     * @memberof TechnicianApiReplaceTechnicianBuddies
+     */
+    readonly id: string
+
+    /**
+     * Buddy IDs
+     * @type {TechnicianBuddiesRequest}
+     * @memberof TechnicianApiReplaceTechnicianBuddies
+     */
+    readonly technicianBuddiesRequest: TechnicianBuddiesRequest
+}
+
+/**
+ * Request parameters for replaceTechnicianLeads operation in TechnicianApi.
+ * @export
+ * @interface TechnicianApiReplaceTechnicianLeadsRequest
+ */
+export interface TechnicianApiReplaceTechnicianLeadsRequest {
+    /**
+     * Buddy technician ID
+     * @type {string}
+     * @memberof TechnicianApiReplaceTechnicianLeads
+     */
+    readonly id: string
+
+    /**
+     * Lead IDs payload
+     * @type {TechnicianLeadsRequest}
+     * @memberof TechnicianApiReplaceTechnicianLeads
+     */
+    readonly technicianLeadsRequest: TechnicianLeadsRequest
+}
+
+/**
+ * Request parameters for replaceTechnicianServiceAreas operation in TechnicianApi.
+ * @export
+ * @interface TechnicianApiReplaceTechnicianServiceAreasRequest
+ */
+export interface TechnicianApiReplaceTechnicianServiceAreasRequest {
+    /**
+     * Technician ID
+     * @type {string}
+     * @memberof TechnicianApiReplaceTechnicianServiceAreas
+     */
+    readonly id: string
+
+    /**
+     * Service area IDs
+     * @type {TechnicianServiceAreasRequest}
+     * @memberof TechnicianApiReplaceTechnicianServiceAreas
+     */
+    readonly technicianServiceAreasRequest: TechnicianServiceAreasRequest
+}
+
+/**
+ * Request parameters for replaceTechnicianVehicles operation in TechnicianApi.
+ * @export
+ * @interface TechnicianApiReplaceTechnicianVehiclesRequest
+ */
+export interface TechnicianApiReplaceTechnicianVehiclesRequest {
+    /**
+     * Technician ID
+     * @type {string}
+     * @memberof TechnicianApiReplaceTechnicianVehicles
+     */
+    readonly id: string
+
+    /**
+     * Vehicle IDs
+     * @type {TechnicianVehiclesRequest}
+     * @memberof TechnicianApiReplaceTechnicianVehicles
+     */
+    readonly technicianVehiclesRequest: TechnicianVehiclesRequest
+}
+
+/**
+ * Request parameters for updateTechnician operation in TechnicianApi.
+ * @export
+ * @interface TechnicianApiUpdateTechnicianRequest
+ */
+export interface TechnicianApiUpdateTechnicianRequest {
+    /**
+     * Technician ID
+     * @type {string}
+     * @memberof TechnicianApiUpdateTechnician
+     */
+    readonly id: string
+
+    /**
+     * Technician details
+     * @type {TechnicianUpdateRequest}
+     * @memberof TechnicianApiUpdateTechnician
+     */
+    readonly technicianUpdateRequest: TechnicianUpdateRequest
+}
+
+/**
  * TechnicianApi - object-oriented interface
  * @export
  * @class TechnicianApi
@@ -293,7 +918,31 @@ export interface TechnicianApiListTechniciansRequest {
  */
 export class TechnicianApi extends BaseAPI {
     /**
-     * Returns details for a specific technician
+     * Creates a technician membership under the current business. If the phone/email matches an existing user, their account is linked. Otherwise a new user identity is created (no invite email — login is passwordless later). Either way the membership starts active. If the technician was previously removed (deactive) they are reactivated instead. Owner/Administrator groups cannot be assigned via API key, and not at all in sandbox mode.  Optional relations (all validated; any missing id → 404 TECHNICIAN_NOT_FOUND with `missing_ids`): `buddy_ids` sets this technician\'s buddy list (use when creating a lead); `lead_ids` adds this technician as a buddy of each named lead (use when creating a buddy — the buddy-side way to attach the same lead↔buddy relation); `service_area_ids` assigns the technician to those service areas.  `start_location_type=office` snapshots the business address + coordinates into the technician at create time; `address`, `start_location_lat`, `start_location_long` in the body are ignored. Requires the business to have coordinates set (else 400 BUSINESS_LOCATION_MISSING). `start_location_type=home` (or empty) uses the address + coordinates from the body.
+     * @summary Add a technician
+     * @param {TechnicianApiCreateTechnicianRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TechnicianApi
+     */
+    public createTechnician(requestParameters: TechnicianApiCreateTechnicianRequest, options?: RawAxiosRequestConfig) {
+        return TechnicianApiFp(this.configuration).createTechnician(requestParameters.technicianCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Soft-removes a technician from the business by setting status to deactive
+     * @summary Remove a technician
+     * @param {TechnicianApiDeleteTechnicianRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TechnicianApi
+     */
+    public deleteTechnician(requestParameters: TechnicianApiDeleteTechnicianRequest, options?: RawAxiosRequestConfig) {
+        return TechnicianApiFp(this.configuration).deleteTechnician(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Returns one technician\'s full profile: contact info, employment status, assignment tier, skills/qualifications, buddy (crew) relations and assigned vehicles — the dispatch-ready view of a field worker.
      * @summary Get a technician
      * @param {TechnicianApiGetTechnicianRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -305,7 +954,7 @@ export class TechnicianApi extends BaseAPI {
     }
 
     /**
-     * Returns a paginated list of technicians for the current business
+     * Returns the field workforce roster: paginated technicians (field workers / engineers) with status, assignment tier (lead, buddy, float), skills and crew relations — the people the dispatch engine schedules onto jobs. Discover the `preferred_technician_id` accepted on customer records here. Supports the `since` cursor for incremental workforce sync.
      * @summary List technicians
      * @param {TechnicianApiListTechniciansRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -314,6 +963,66 @@ export class TechnicianApi extends BaseAPI {
      */
     public listTechnicians(requestParameters: TechnicianApiListTechniciansRequest = {}, options?: RawAxiosRequestConfig) {
         return TechnicianApiFp(this.configuration).listTechnicians(requestParameters.page, requestParameters.limit, requestParameters.status, requestParameters.assignmentTier, requestParameters.keyword, requestParameters.sort, requestParameters.since, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Overwrites the technician\'s buddy list with the provided set of technician IDs. Sending an empty list clears all buddies. Each buddy ID must be an active technician of the same business; a technician cannot be their own buddy.
+     * @summary Replace a technician\'s buddies
+     * @param {TechnicianApiReplaceTechnicianBuddiesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TechnicianApi
+     */
+    public replaceTechnicianBuddies(requestParameters: TechnicianApiReplaceTechnicianBuddiesRequest, options?: RawAxiosRequestConfig) {
+        return TechnicianApiFp(this.configuration).replaceTechnicianBuddies(requestParameters.id, requestParameters.technicianBuddiesRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Sets the full set of leads this buddy belongs to (many-to-many favorites). Replace-semantics — lead_ids is the complete new list; [] clears every leader. Managed by business staff.
+     * @summary Replace a buddy\'s leaders (buddy side)
+     * @param {TechnicianApiReplaceTechnicianLeadsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TechnicianApi
+     */
+    public replaceTechnicianLeads(requestParameters: TechnicianApiReplaceTechnicianLeadsRequest, options?: RawAxiosRequestConfig) {
+        return TechnicianApiFp(this.configuration).replaceTechnicianLeads(requestParameters.id, requestParameters.technicianLeadsRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Overwrites the technician\'s service-area assignments with the provided set of service area IDs. Sending an empty list clears all. Each service area ID must belong to the same business — any missing id → 404 SERVICE_AREA_NOT_FOUND with `missing_ids` and no writes. The resolved set is returned and also embedded as `service_areas` in the technician GET/list response. Managed by business staff (Booking Coordinator), not tech self-service.
+     * @summary Replace a technician\'s service areas
+     * @param {TechnicianApiReplaceTechnicianServiceAreasRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TechnicianApi
+     */
+    public replaceTechnicianServiceAreas(requestParameters: TechnicianApiReplaceTechnicianServiceAreasRequest, options?: RawAxiosRequestConfig) {
+        return TechnicianApiFp(this.configuration).replaceTechnicianServiceAreas(requestParameters.id, requestParameters.technicianServiceAreasRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Overwrites the technician\'s vehicle list with the provided set of vehicle IDs (the vehicles this technician uses). Sending an empty list clears all. Each vehicle ID must belong to the same business. The list is also embedded as `vehicle_ids` in the technician GET/list response.
+     * @summary Replace a technician\'s vehicles
+     * @param {TechnicianApiReplaceTechnicianVehiclesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TechnicianApi
+     */
+    public replaceTechnicianVehicles(requestParameters: TechnicianApiReplaceTechnicianVehiclesRequest, options?: RawAxiosRequestConfig) {
+        return TechnicianApiFp(this.configuration).replaceTechnicianVehicles(requestParameters.id, requestParameters.technicianVehiclesRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Updates mutable technician profile fields. `start_location_type=office` re-snapshots the current business address + coordinates (body `address`/`start_location_lat`/`start_location_long` ignored; requires business coordinates, else 400 BUSINESS_LOCATION_MISSING). `start_location_type=home` (or empty) uses the address + coordinates from the body.
+     * @summary Update a technician
+     * @param {TechnicianApiUpdateTechnicianRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TechnicianApi
+     */
+    public updateTechnician(requestParameters: TechnicianApiUpdateTechnicianRequest, options?: RawAxiosRequestConfig) {
+        return TechnicianApiFp(this.configuration).updateTechnician(requestParameters.id, requestParameters.technicianUpdateRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

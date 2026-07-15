@@ -1,8 +1,8 @@
 {
   "name": "@crisphive/sdk",
-  "version": "0.1.0",
-  "description": "OpenAPI client for @crisphive/sdk",
-  "author": "OpenAPI-Generator Contributors",
+  "version": "0.2.0",
+  "description": "Official Node.js/TypeScript SDK for the Crisphive API.",
+  "author": "CrisphiveDeveloper <developer@crisphive.com>",
   "repository": {
     "type": "git",
     "url": "https://github.com/crisphive/crisphive-node.git"
@@ -11,10 +11,9 @@
     "axios",
     "typescript",
     "openapi-client",
-    "openapi-generator",
     "@crisphive/sdk"
   ],
-  "license": "Unlicense",
+  "license": "MIT",
   "main": "./dist/index.js",
   "typings": "./dist/index.d.ts",
   "module": "./dist/esm/index.js",
@@ -29,5 +28,12 @@
   "devDependencies": {
     "@types/node": "12.11.5 - 12.20.42",
     "typescript": "^4.0 || ^5.0"
+  },
+  "homepage": "https://docs.crisphive.com",
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
   }
 }

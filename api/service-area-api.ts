@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * CrispHive Developer API
- * Public REST API for integrating CrispHive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
+ * Crisphive Developer API
+ * Public REST API for integrating Crisphive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
  *
  * The version of the OpenAPI document: 1.0
  * 
@@ -34,7 +34,7 @@ import type { ResponseEnvelope } from '../models';
 export const ServiceAreaApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Returns details of a specific service area
+         * Returns one service area — a geographic coverage zone (service territory) the business operates in, with its name and geometry metadata. Reference its UUID as `service_area_id` on customer records for territory-aware dispatch.
          * @summary Get a service area
          * @param {string} id Service Area ID
          * @param {*} [options] Override http request option.
@@ -72,7 +72,7 @@ export const ServiceAreaApiAxiosParamCreator = function (configuration?: Configu
             };
         },
         /**
-         * Returns a paginated list of service areas for the business
+         * Returns the business\'s geographic coverage: paginated service areas (service territories / coverage zones) used for routing jobs to the right teams. Discover the `service_area_id` values accepted on customer create/update here.
          * @summary List service areas
          * @param {number} [page] Page number (default 1)
          * @param {number} [limit] Items per page (default 15, max 1000)
@@ -126,7 +126,7 @@ export const ServiceAreaApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = ServiceAreaApiAxiosParamCreator(configuration)
     return {
         /**
-         * Returns details of a specific service area
+         * Returns one service area — a geographic coverage zone (service territory) the business operates in, with its name and geometry metadata. Reference its UUID as `service_area_id` on customer records for territory-aware dispatch.
          * @summary Get a service area
          * @param {string} id Service Area ID
          * @param {*} [options] Override http request option.
@@ -139,7 +139,7 @@ export const ServiceAreaApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Returns a paginated list of service areas for the business
+         * Returns the business\'s geographic coverage: paginated service areas (service territories / coverage zones) used for routing jobs to the right teams. Discover the `service_area_id` values accepted on customer create/update here.
          * @summary List service areas
          * @param {number} [page] Page number (default 1)
          * @param {number} [limit] Items per page (default 15, max 1000)
@@ -163,7 +163,7 @@ export const ServiceAreaApiFactory = function (configuration?: Configuration, ba
     const localVarFp = ServiceAreaApiFp(configuration)
     return {
         /**
-         * Returns details of a specific service area
+         * Returns one service area — a geographic coverage zone (service territory) the business operates in, with its name and geometry metadata. Reference its UUID as `service_area_id` on customer records for territory-aware dispatch.
          * @summary Get a service area
          * @param {ServiceAreaApiGetServiceAreaRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -173,7 +173,7 @@ export const ServiceAreaApiFactory = function (configuration?: Configuration, ba
             return localVarFp.getServiceArea(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * Returns a paginated list of service areas for the business
+         * Returns the business\'s geographic coverage: paginated service areas (service territories / coverage zones) used for routing jobs to the right teams. Discover the `service_area_id` values accepted on customer create/update here.
          * @summary List service areas
          * @param {ServiceAreaApiListServiceAreasRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -228,7 +228,7 @@ export interface ServiceAreaApiListServiceAreasRequest {
  */
 export class ServiceAreaApi extends BaseAPI {
     /**
-     * Returns details of a specific service area
+     * Returns one service area — a geographic coverage zone (service territory) the business operates in, with its name and geometry metadata. Reference its UUID as `service_area_id` on customer records for territory-aware dispatch.
      * @summary Get a service area
      * @param {ServiceAreaApiGetServiceAreaRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -240,7 +240,7 @@ export class ServiceAreaApi extends BaseAPI {
     }
 
     /**
-     * Returns a paginated list of service areas for the business
+     * Returns the business\'s geographic coverage: paginated service areas (service territories / coverage zones) used for routing jobs to the right teams. Discover the `service_area_id` values accepted on customer create/update here.
      * @summary List service areas
      * @param {ServiceAreaApiListServiceAreasRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.

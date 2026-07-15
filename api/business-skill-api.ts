@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * CrispHive Developer API
- * Public REST API for integrating CrispHive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
+ * Crisphive Developer API
+ * Public REST API for integrating Crisphive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
  *
  * The version of the OpenAPI document: 1.0
  * 
@@ -28,7 +28,11 @@ import type { ListSkills200Response } from '../models';
 // @ts-ignore
 import type { ListSkillsByCategory200Response } from '../models';
 // @ts-ignore
+import type { ListTechnicianSkills200Response } from '../models';
+// @ts-ignore
 import type { ResponseEnvelope } from '../models';
+// @ts-ignore
+import type { TechnicianSkillsRequest } from '../models';
 /**
  * BusinessSkillApi - axios parameter creator
  * @export
@@ -36,7 +40,7 @@ import type { ResponseEnvelope } from '../models';
 export const BusinessSkillApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Returns paginated skill categories for the current business, ordered alphabetically.
+         * Returns paginated skill categories — how the business groups technician qualifications by trade or specialty (e.g. HVAC, plumbing, electrical) — ordered alphabetically.
          * @summary List skill categories
          * @param {number} [page] Page number (default: 1)
          * @param {number} [limit] Page size (default: 15, max: 1000)
@@ -80,7 +84,7 @@ export const BusinessSkillApiAxiosParamCreator = function (configuration?: Confi
             };
         },
         /**
-         * Returns the flat list of all active skills for the current business across every category. Use this to discover the skill UUIDs accepted in `skill_ids` when creating a job request. (For a category-grouped view, use GET /skill-categories and GET /skill-categories/{id}/skills.)
+         * Returns the flat list of all active technician skills / qualifications for the current business — the vocabulary the dispatch engine uses for skill-based matching when assigning technicians and crews. Use it to discover the skill UUIDs accepted in `skill_ids` when creating a job request. (For a category-grouped view, use GET /skill-categories and GET /skill-categories/{id}/skills.)
          * @summary List all skills
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -114,7 +118,7 @@ export const BusinessSkillApiAxiosParamCreator = function (configuration?: Confi
             };
         },
         /**
-         * Returns paginated skills belonging to the given category, ordered alphabetically. The `members` field on each skill is the count of active technicians currently assigned to it.
+         * Returns paginated skills (technician qualifications/certifications) belonging to the given trade/specialty category, ordered alphabetically. The `members` field on each skill is the count of active technicians currently holding it — a quick capacity check per capability.
          * @summary List skills in a category
          * @param {string} id Skill category ID (UUID)
          * @param {number} [page] Page number (default: 1)
@@ -161,6 +165,103 @@ export const BusinessSkillApiAxiosParamCreator = function (configuration?: Confi
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Returns paginated skills assigned to the technician. By default (`eligible_only` omitted or `true`) only active skills are returned — pass `eligible_only=false` to include inactive skills.
+         * @summary List skills for a technician
+         * @param {string} id Technician ID — business_user_profiles.id (UUID)
+         * @param {boolean} [eligibleOnly] true (default) &#x3D; active skills only; false &#x3D; all assigned skills including inactive
+         * @param {number} [page] Page number (default: 1)
+         * @param {number} [limit] Page size (default: 15, max: 1000)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listTechnicianSkills: async (id: string, eligibleOnly?: boolean, page?: number, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('listTechnicianSkills', 'id', id)
+            const localVarPath = `/technicians/{id}/skills`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (eligibleOnly !== undefined) {
+                localVarQueryParameter['eligible_only'] = eligibleOnly;
+            }
+
+            if (page !== undefined) {
+                localVarQueryParameter['page'] = page;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Sets the technician\'s full skill set in one call (replace semantics): skills not in the list are removed, new ones added. Pass an empty list to clear all. All skills must be active and belong to the business — on SKILL_NOT_FOUND (404) the `data` field contains `{\"missing_ids\": [\"uuid\", ...]}`; on SKILL_INACTIVE (409) it contains `{\"inactive_ids\": [\"uuid\", ...]}`.
+         * @summary Replace a technician\'s skills
+         * @param {string} id Technician ID — business_user_profiles.id (UUID)
+         * @param {TechnicianSkillsRequest} technicianSkillsRequest Full list of skill_ids (business_skills.id), 0–100 UUIDs
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        replaceTechnicianSkills: async (id: string, technicianSkillsRequest: TechnicianSkillsRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('replaceTechnicianSkills', 'id', id)
+            // verify required parameter 'technicianSkillsRequest' is not null or undefined
+            assertParamExists('replaceTechnicianSkills', 'technicianSkillsRequest', technicianSkillsRequest)
+            const localVarPath = `/technicians/{id}/skills`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(technicianSkillsRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -172,7 +273,7 @@ export const BusinessSkillApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = BusinessSkillApiAxiosParamCreator(configuration)
     return {
         /**
-         * Returns paginated skill categories for the current business, ordered alphabetically.
+         * Returns paginated skill categories — how the business groups technician qualifications by trade or specialty (e.g. HVAC, plumbing, electrical) — ordered alphabetically.
          * @summary List skill categories
          * @param {number} [page] Page number (default: 1)
          * @param {number} [limit] Page size (default: 15, max: 1000)
@@ -186,7 +287,7 @@ export const BusinessSkillApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Returns the flat list of all active skills for the current business across every category. Use this to discover the skill UUIDs accepted in `skill_ids` when creating a job request. (For a category-grouped view, use GET /skill-categories and GET /skill-categories/{id}/skills.)
+         * Returns the flat list of all active technician skills / qualifications for the current business — the vocabulary the dispatch engine uses for skill-based matching when assigning technicians and crews. Use it to discover the skill UUIDs accepted in `skill_ids` when creating a job request. (For a category-grouped view, use GET /skill-categories and GET /skill-categories/{id}/skills.)
          * @summary List all skills
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -198,7 +299,7 @@ export const BusinessSkillApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Returns paginated skills belonging to the given category, ordered alphabetically. The `members` field on each skill is the count of active technicians currently assigned to it.
+         * Returns paginated skills (technician qualifications/certifications) belonging to the given trade/specialty category, ordered alphabetically. The `members` field on each skill is the count of active technicians currently holding it — a quick capacity check per capability.
          * @summary List skills in a category
          * @param {string} id Skill category ID (UUID)
          * @param {number} [page] Page number (default: 1)
@@ -212,6 +313,36 @@ export const BusinessSkillApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['BusinessSkillApi.listSkillsByCategory']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Returns paginated skills assigned to the technician. By default (`eligible_only` omitted or `true`) only active skills are returned — pass `eligible_only=false` to include inactive skills.
+         * @summary List skills for a technician
+         * @param {string} id Technician ID — business_user_profiles.id (UUID)
+         * @param {boolean} [eligibleOnly] true (default) &#x3D; active skills only; false &#x3D; all assigned skills including inactive
+         * @param {number} [page] Page number (default: 1)
+         * @param {number} [limit] Page size (default: 15, max: 1000)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listTechnicianSkills(id: string, eligibleOnly?: boolean, page?: number, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListTechnicianSkills200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listTechnicianSkills(id, eligibleOnly, page, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BusinessSkillApi.listTechnicianSkills']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Sets the technician\'s full skill set in one call (replace semantics): skills not in the list are removed, new ones added. Pass an empty list to clear all. All skills must be active and belong to the business — on SKILL_NOT_FOUND (404) the `data` field contains `{\"missing_ids\": [\"uuid\", ...]}`; on SKILL_INACTIVE (409) it contains `{\"inactive_ids\": [\"uuid\", ...]}`.
+         * @summary Replace a technician\'s skills
+         * @param {string} id Technician ID — business_user_profiles.id (UUID)
+         * @param {TechnicianSkillsRequest} technicianSkillsRequest Full list of skill_ids (business_skills.id), 0–100 UUIDs
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async replaceTechnicianSkills(id: string, technicianSkillsRequest: TechnicianSkillsRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.replaceTechnicianSkills(id, technicianSkillsRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BusinessSkillApi.replaceTechnicianSkills']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -223,7 +354,7 @@ export const BusinessSkillApiFactory = function (configuration?: Configuration, 
     const localVarFp = BusinessSkillApiFp(configuration)
     return {
         /**
-         * Returns paginated skill categories for the current business, ordered alphabetically.
+         * Returns paginated skill categories — how the business groups technician qualifications by trade or specialty (e.g. HVAC, plumbing, electrical) — ordered alphabetically.
          * @summary List skill categories
          * @param {BusinessSkillApiListSkillCategoriesRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -233,7 +364,7 @@ export const BusinessSkillApiFactory = function (configuration?: Configuration, 
             return localVarFp.listSkillCategories(requestParameters.page, requestParameters.limit, options).then((request) => request(axios, basePath));
         },
         /**
-         * Returns the flat list of all active skills for the current business across every category. Use this to discover the skill UUIDs accepted in `skill_ids` when creating a job request. (For a category-grouped view, use GET /skill-categories and GET /skill-categories/{id}/skills.)
+         * Returns the flat list of all active technician skills / qualifications for the current business — the vocabulary the dispatch engine uses for skill-based matching when assigning technicians and crews. Use it to discover the skill UUIDs accepted in `skill_ids` when creating a job request. (For a category-grouped view, use GET /skill-categories and GET /skill-categories/{id}/skills.)
          * @summary List all skills
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -242,7 +373,7 @@ export const BusinessSkillApiFactory = function (configuration?: Configuration, 
             return localVarFp.listSkills(options).then((request) => request(axios, basePath));
         },
         /**
-         * Returns paginated skills belonging to the given category, ordered alphabetically. The `members` field on each skill is the count of active technicians currently assigned to it.
+         * Returns paginated skills (technician qualifications/certifications) belonging to the given trade/specialty category, ordered alphabetically. The `members` field on each skill is the count of active technicians currently holding it — a quick capacity check per capability.
          * @summary List skills in a category
          * @param {BusinessSkillApiListSkillsByCategoryRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -250,6 +381,26 @@ export const BusinessSkillApiFactory = function (configuration?: Configuration, 
          */
         listSkillsByCategory(requestParameters: BusinessSkillApiListSkillsByCategoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListSkillsByCategory200Response> {
             return localVarFp.listSkillsByCategory(requestParameters.id, requestParameters.page, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Returns paginated skills assigned to the technician. By default (`eligible_only` omitted or `true`) only active skills are returned — pass `eligible_only=false` to include inactive skills.
+         * @summary List skills for a technician
+         * @param {BusinessSkillApiListTechnicianSkillsRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listTechnicianSkills(requestParameters: BusinessSkillApiListTechnicianSkillsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListTechnicianSkills200Response> {
+            return localVarFp.listTechnicianSkills(requestParameters.id, requestParameters.eligibleOnly, requestParameters.page, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Sets the technician\'s full skill set in one call (replace semantics): skills not in the list are removed, new ones added. Pass an empty list to clear all. All skills must be active and belong to the business — on SKILL_NOT_FOUND (404) the `data` field contains `{\"missing_ids\": [\"uuid\", ...]}`; on SKILL_INACTIVE (409) it contains `{\"inactive_ids\": [\"uuid\", ...]}`.
+         * @summary Replace a technician\'s skills
+         * @param {BusinessSkillApiReplaceTechnicianSkillsRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        replaceTechnicianSkills(requestParameters: BusinessSkillApiReplaceTechnicianSkillsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.replaceTechnicianSkills(requestParameters.id, requestParameters.technicianSkillsRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
@@ -304,6 +455,62 @@ export interface BusinessSkillApiListSkillsByCategoryRequest {
 }
 
 /**
+ * Request parameters for listTechnicianSkills operation in BusinessSkillApi.
+ * @export
+ * @interface BusinessSkillApiListTechnicianSkillsRequest
+ */
+export interface BusinessSkillApiListTechnicianSkillsRequest {
+    /**
+     * Technician ID — business_user_profiles.id (UUID)
+     * @type {string}
+     * @memberof BusinessSkillApiListTechnicianSkills
+     */
+    readonly id: string
+
+    /**
+     * true (default) &#x3D; active skills only; false &#x3D; all assigned skills including inactive
+     * @type {boolean}
+     * @memberof BusinessSkillApiListTechnicianSkills
+     */
+    readonly eligibleOnly?: boolean
+
+    /**
+     * Page number (default: 1)
+     * @type {number}
+     * @memberof BusinessSkillApiListTechnicianSkills
+     */
+    readonly page?: number
+
+    /**
+     * Page size (default: 15, max: 1000)
+     * @type {number}
+     * @memberof BusinessSkillApiListTechnicianSkills
+     */
+    readonly limit?: number
+}
+
+/**
+ * Request parameters for replaceTechnicianSkills operation in BusinessSkillApi.
+ * @export
+ * @interface BusinessSkillApiReplaceTechnicianSkillsRequest
+ */
+export interface BusinessSkillApiReplaceTechnicianSkillsRequest {
+    /**
+     * Technician ID — business_user_profiles.id (UUID)
+     * @type {string}
+     * @memberof BusinessSkillApiReplaceTechnicianSkills
+     */
+    readonly id: string
+
+    /**
+     * Full list of skill_ids (business_skills.id), 0–100 UUIDs
+     * @type {TechnicianSkillsRequest}
+     * @memberof BusinessSkillApiReplaceTechnicianSkills
+     */
+    readonly technicianSkillsRequest: TechnicianSkillsRequest
+}
+
+/**
  * BusinessSkillApi - object-oriented interface
  * @export
  * @class BusinessSkillApi
@@ -311,7 +518,7 @@ export interface BusinessSkillApiListSkillsByCategoryRequest {
  */
 export class BusinessSkillApi extends BaseAPI {
     /**
-     * Returns paginated skill categories for the current business, ordered alphabetically.
+     * Returns paginated skill categories — how the business groups technician qualifications by trade or specialty (e.g. HVAC, plumbing, electrical) — ordered alphabetically.
      * @summary List skill categories
      * @param {BusinessSkillApiListSkillCategoriesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -323,7 +530,7 @@ export class BusinessSkillApi extends BaseAPI {
     }
 
     /**
-     * Returns the flat list of all active skills for the current business across every category. Use this to discover the skill UUIDs accepted in `skill_ids` when creating a job request. (For a category-grouped view, use GET /skill-categories and GET /skill-categories/{id}/skills.)
+     * Returns the flat list of all active technician skills / qualifications for the current business — the vocabulary the dispatch engine uses for skill-based matching when assigning technicians and crews. Use it to discover the skill UUIDs accepted in `skill_ids` when creating a job request. (For a category-grouped view, use GET /skill-categories and GET /skill-categories/{id}/skills.)
      * @summary List all skills
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -334,7 +541,7 @@ export class BusinessSkillApi extends BaseAPI {
     }
 
     /**
-     * Returns paginated skills belonging to the given category, ordered alphabetically. The `members` field on each skill is the count of active technicians currently assigned to it.
+     * Returns paginated skills (technician qualifications/certifications) belonging to the given trade/specialty category, ordered alphabetically. The `members` field on each skill is the count of active technicians currently holding it — a quick capacity check per capability.
      * @summary List skills in a category
      * @param {BusinessSkillApiListSkillsByCategoryRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -343,6 +550,30 @@ export class BusinessSkillApi extends BaseAPI {
      */
     public listSkillsByCategory(requestParameters: BusinessSkillApiListSkillsByCategoryRequest, options?: RawAxiosRequestConfig) {
         return BusinessSkillApiFp(this.configuration).listSkillsByCategory(requestParameters.id, requestParameters.page, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Returns paginated skills assigned to the technician. By default (`eligible_only` omitted or `true`) only active skills are returned — pass `eligible_only=false` to include inactive skills.
+     * @summary List skills for a technician
+     * @param {BusinessSkillApiListTechnicianSkillsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BusinessSkillApi
+     */
+    public listTechnicianSkills(requestParameters: BusinessSkillApiListTechnicianSkillsRequest, options?: RawAxiosRequestConfig) {
+        return BusinessSkillApiFp(this.configuration).listTechnicianSkills(requestParameters.id, requestParameters.eligibleOnly, requestParameters.page, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Sets the technician\'s full skill set in one call (replace semantics): skills not in the list are removed, new ones added. Pass an empty list to clear all. All skills must be active and belong to the business — on SKILL_NOT_FOUND (404) the `data` field contains `{\"missing_ids\": [\"uuid\", ...]}`; on SKILL_INACTIVE (409) it contains `{\"inactive_ids\": [\"uuid\", ...]}`.
+     * @summary Replace a technician\'s skills
+     * @param {BusinessSkillApiReplaceTechnicianSkillsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BusinessSkillApi
+     */
+    public replaceTechnicianSkills(requestParameters: BusinessSkillApiReplaceTechnicianSkillsRequest, options?: RawAxiosRequestConfig) {
+        return BusinessSkillApiFp(this.configuration).replaceTechnicianSkills(requestParameters.id, requestParameters.technicianSkillsRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

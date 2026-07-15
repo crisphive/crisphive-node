@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * CrispHive Developer API
- * Public REST API for integrating CrispHive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
+ * Crisphive Developer API
+ * Public REST API for integrating Crisphive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
  *
  * The version of the OpenAPI document: 1.0
  * 
@@ -21,55 +21,55 @@
  */
 export interface CustomerAddressRequest {
     /**
-     * 
+     * City / locality. Max 100 chars.
      * @type {string}
      * @memberof CustomerAddressRequest
      */
     'city'?: string;
     /**
-     * 
+     * Country (free-form or ISO code). Max 100 chars.
      * @type {string}
      * @memberof CustomerAddressRequest
      */
     'country'?: string;
     /**
-     * 
+     * Human-readable single-line address; when set it wins over the discrete parts for display. Max 500 chars.
      * @type {string}
      * @memberof CustomerAddressRequest
      */
     'formatted'?: string;
     /**
-     * 
+     * Geographic latitude in decimal degrees (-90..90). Omit if unknown.
      * @type {number}
      * @memberof CustomerAddressRequest
      */
     'latitude'?: number;
     /**
-     * 
+     * Street address, line 1 (e.g. \"123 Main St\"). Max 255 chars.
      * @type {string}
      * @memberof CustomerAddressRequest
      */
     'line'?: string;
     /**
-     * 
+     * Street address, line 2 (apartment, suite, unit). Max 255 chars.
      * @type {string}
      * @memberof CustomerAddressRequest
      */
     'line2'?: string;
     /**
-     * 
+     * Geographic longitude in decimal degrees (-180..180). Omit if unknown.
      * @type {number}
      * @memberof CustomerAddressRequest
      */
     'longitude'?: number;
     /**
-     * 
+     * Postal / ZIP code. Max 32 chars.
      * @type {string}
      * @memberof CustomerAddressRequest
      */
     'postal_code'?: string;
     /**
-     * 
+     * State / province / region. Max 100 chars.
      * @type {string}
      * @memberof CustomerAddressRequest
      */

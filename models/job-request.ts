@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * CrispHive Developer API
- * Public REST API for integrating CrispHive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
+ * Crisphive Developer API
+ * Public REST API for integrating Crisphive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
  *
  * The version of the OpenAPI document: 1.0
  * 
@@ -31,6 +31,9 @@ import type { JobRequestAssignedVehicle } from './job-request-assigned-vehicle';
 // May contain unused imports in some cases
 // @ts-ignore
 import type { JobRequestAssignmentSummary } from './job-request-assignment-summary';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { JobRequestAttentionSummary } from './job-request-attention-summary';
 // May contain unused imports in some cases
 // @ts-ignore
 import type { JobRequestCrewMember } from './job-request-crew-member';
@@ -89,6 +92,12 @@ export interface JobRequest {
      * @memberof JobRequest
      */
     'assignment'?: JobRequestAssignmentSummary;
+    /**
+     * Attention is the dispatch-board \"needs attention\" marker (exception tray); null when the job needs no attention.
+     * @type {JobRequestAttentionSummary}
+     * @memberof JobRequest
+     */
+    'attention'?: JobRequestAttentionSummary;
     /**
      * UUID of the owning business.
      * @type {string}
@@ -174,7 +183,7 @@ export interface JobRequest {
      */
     'next_actions'?: Array<JobRequestActionSummary>;
     /**
-     * Job priority.
+     * Scheduling priority. p0=emergency (interrupt-driven), p1=top (displaced only by p0), p2=standard, p3=deferrable (first candidate for displacement).
      * @type {string}
      * @memberof JobRequest
      */
@@ -210,6 +219,24 @@ export interface JobRequest {
      */
     'skills'?: Array<JobRequestSkillSummary>;
     /**
+     * SLA deadline (UTC) armed on a p1 job; omitted when no SLA.
+     * @type {string}
+     * @memberof JobRequest
+     */
+    'sla_deadline'?: string;
+    /**
+     * When the SLA sweep auto-escalated this job to p0 (UTC); omitted if never.
+     * @type {string}
+     * @memberof JobRequest
+     */
+    'sla_escalated_at'?: string;
+    /**
+     * When the sweep fired the one-shot pre-escalation warning (UTC); omitted if never.
+     * @type {string}
+     * @memberof JobRequest
+     */
+    'sla_warned_at'?: string;
+    /**
      * Optimistic-lock version; pass back as status_version on transitions to avoid races.
      * @type {number}
      * @memberof JobRequest
@@ -236,8 +263,10 @@ export interface JobRequest {
 }
 
 export const JobRequestPriorityEnum = {
-    Normal: 'normal',
-    Emergency: 'emergency'
+    P0: 'p0',
+    P1: 'p1',
+    P2: 'p2',
+    P3: 'p3'
 } as const;
 
 export type JobRequestPriorityEnum = typeof JobRequestPriorityEnum[keyof typeof JobRequestPriorityEnum];

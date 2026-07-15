@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * CrispHive Developer API
- * Public REST API for integrating CrispHive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
+ * Crisphive Developer API
+ * Public REST API for integrating Crisphive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
  *
  * The version of the OpenAPI document: 1.0
  * 
@@ -40,13 +40,14 @@ import type { ResponseEnvelope } from '../models';
 export const CustomerApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Adds a new customer record to the current business. Address (street, city, postal_code, ...) and coordinates (latitude/longitude) live under the nested `address` object. service_area_id must be a valid service area UUID belonging to this business.
+         * Creates a customer record — the client/account profile a job request (work order) is booked against; use it to import or sync customers from your own CRM, website lead form or intake flow. Address (street, city, postal_code, ...) and coordinates (latitude/longitude) live under the nested `address` object. service_area_id must be a valid service area UUID belonging to this business.
          * @summary Create a customer
          * @param {CustomerCreateRequest} customerCreateRequest Customer details
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createCustomer: async (customerCreateRequest: CustomerCreateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        createCustomer: async (customerCreateRequest: CustomerCreateRequest, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'customerCreateRequest' is not null or undefined
             assertParamExists('createCustomer', 'customerCreateRequest', customerCreateRequest)
             const localVarPath = `/customers`;
@@ -69,6 +70,9 @@ export const CustomerApiAxiosParamCreator = function (configuration?: Configurat
     
             localVarHeaderParameter['Content-Type'] = 'application/json';
 
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -80,7 +84,7 @@ export const CustomerApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * Soft-deletes a customer record.
+         * Soft-deletes a customer record, removing it from the active customer directory; existing bookings keep their customer snapshot.
          * @summary Delete a customer
          * @param {string} id Customer ID
          * @param {*} [options] Override http request option.
@@ -118,7 +122,7 @@ export const CustomerApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * Returns the full profile, contact details and spending summary. contact.preferred_technician includes {id, name}. contact.service_area includes {id, name}. contact.address.latitude / contact.address.longitude are null if no coordinates saved.
+         * Returns the full customer record: profile, contact details, tier and lifetime spending summary — a 360° client view for support, upsell or CRM enrichment. contact.preferred_technician includes {id, name}. contact.service_area includes {id, name}. contact.address.latitude / contact.address.longitude are null if no coordinates saved.
          * @summary Get a customer
          * @param {string} id Customer ID (UUID)
          * @param {*} [options] Override http request option.
@@ -156,7 +160,7 @@ export const CustomerApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * Returns a paginated, searchable list of customers for the current business.
+         * Returns a paginated, searchable directory of the business\'s customer records — the customer database (CRM) behind every booking and work order. Supports the `since`/`next_since` cursor for incremental sync into an external CRM, ERP or marketing tool.
          * @summary List customers
          * @param {string} [q] Search name, UID, phone, email
          * @param {Array<string>} [tier] Filter by tier: regular|vip (repeatable)
@@ -230,7 +234,7 @@ export const CustomerApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * Replaces mutable fields on a customer record. Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
+         * Replaces mutable fields on a customer record — two-way CRM sync friendly (push changes from your system of record). Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
          * @summary Update a customer
          * @param {string} id Customer ID (UUID)
          * @param {CustomerUpdateRequest} customerUpdateRequest Fields to update
@@ -284,20 +288,21 @@ export const CustomerApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = CustomerApiAxiosParamCreator(configuration)
     return {
         /**
-         * Adds a new customer record to the current business. Address (street, city, postal_code, ...) and coordinates (latitude/longitude) live under the nested `address` object. service_area_id must be a valid service area UUID belonging to this business.
+         * Creates a customer record — the client/account profile a job request (work order) is booked against; use it to import or sync customers from your own CRM, website lead form or intake flow. Address (street, city, postal_code, ...) and coordinates (latitude/longitude) live under the nested `address` object. service_area_id must be a valid service area UUID belonging to this business.
          * @summary Create a customer
          * @param {CustomerCreateRequest} customerCreateRequest Customer details
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createCustomer(customerCreateRequest: CustomerCreateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateCustomer200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createCustomer(customerCreateRequest, options);
+        async createCustomer(customerCreateRequest: CustomerCreateRequest, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateCustomer200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createCustomer(customerCreateRequest, idempotencyKey, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['CustomerApi.createCustomer']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Soft-deletes a customer record.
+         * Soft-deletes a customer record, removing it from the active customer directory; existing bookings keep their customer snapshot.
          * @summary Delete a customer
          * @param {string} id Customer ID
          * @param {*} [options] Override http request option.
@@ -310,7 +315,7 @@ export const CustomerApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Returns the full profile, contact details and spending summary. contact.preferred_technician includes {id, name}. contact.service_area includes {id, name}. contact.address.latitude / contact.address.longitude are null if no coordinates saved.
+         * Returns the full customer record: profile, contact details, tier and lifetime spending summary — a 360° client view for support, upsell or CRM enrichment. contact.preferred_technician includes {id, name}. contact.service_area includes {id, name}. contact.address.latitude / contact.address.longitude are null if no coordinates saved.
          * @summary Get a customer
          * @param {string} id Customer ID (UUID)
          * @param {*} [options] Override http request option.
@@ -323,7 +328,7 @@ export const CustomerApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Returns a paginated, searchable list of customers for the current business.
+         * Returns a paginated, searchable directory of the business\'s customer records — the customer database (CRM) behind every booking and work order. Supports the `since`/`next_since` cursor for incremental sync into an external CRM, ERP or marketing tool.
          * @summary List customers
          * @param {string} [q] Search name, UID, phone, email
          * @param {Array<string>} [tier] Filter by tier: regular|vip (repeatable)
@@ -343,7 +348,7 @@ export const CustomerApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Replaces mutable fields on a customer record. Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
+         * Replaces mutable fields on a customer record — two-way CRM sync friendly (push changes from your system of record). Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
          * @summary Update a customer
          * @param {string} id Customer ID (UUID)
          * @param {CustomerUpdateRequest} customerUpdateRequest Fields to update
@@ -367,17 +372,17 @@ export const CustomerApiFactory = function (configuration?: Configuration, baseP
     const localVarFp = CustomerApiFp(configuration)
     return {
         /**
-         * Adds a new customer record to the current business. Address (street, city, postal_code, ...) and coordinates (latitude/longitude) live under the nested `address` object. service_area_id must be a valid service area UUID belonging to this business.
+         * Creates a customer record — the client/account profile a job request (work order) is booked against; use it to import or sync customers from your own CRM, website lead form or intake flow. Address (street, city, postal_code, ...) and coordinates (latitude/longitude) live under the nested `address` object. service_area_id must be a valid service area UUID belonging to this business.
          * @summary Create a customer
          * @param {CustomerApiCreateCustomerRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         createCustomer(requestParameters: CustomerApiCreateCustomerRequest, options?: RawAxiosRequestConfig): AxiosPromise<CreateCustomer200Response> {
-            return localVarFp.createCustomer(requestParameters.customerCreateRequest, options).then((request) => request(axios, basePath));
+            return localVarFp.createCustomer(requestParameters.customerCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
         },
         /**
-         * Soft-deletes a customer record.
+         * Soft-deletes a customer record, removing it from the active customer directory; existing bookings keep their customer snapshot.
          * @summary Delete a customer
          * @param {CustomerApiDeleteCustomerRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -387,7 +392,7 @@ export const CustomerApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.deleteCustomer(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * Returns the full profile, contact details and spending summary. contact.preferred_technician includes {id, name}. contact.service_area includes {id, name}. contact.address.latitude / contact.address.longitude are null if no coordinates saved.
+         * Returns the full customer record: profile, contact details, tier and lifetime spending summary — a 360° client view for support, upsell or CRM enrichment. contact.preferred_technician includes {id, name}. contact.service_area includes {id, name}. contact.address.latitude / contact.address.longitude are null if no coordinates saved.
          * @summary Get a customer
          * @param {CustomerApiGetCustomerRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -397,7 +402,7 @@ export const CustomerApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.getCustomer(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * Returns a paginated, searchable list of customers for the current business.
+         * Returns a paginated, searchable directory of the business\'s customer records — the customer database (CRM) behind every booking and work order. Supports the `since`/`next_since` cursor for incremental sync into an external CRM, ERP or marketing tool.
          * @summary List customers
          * @param {CustomerApiListCustomersRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -407,7 +412,7 @@ export const CustomerApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.listCustomers(requestParameters.q, requestParameters.tier, requestParameters.status, requestParameters.preferredTechnicianId, requestParameters.sort, requestParameters.page, requestParameters.limit, requestParameters.since, options).then((request) => request(axios, basePath));
         },
         /**
-         * Replaces mutable fields on a customer record. Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
+         * Replaces mutable fields on a customer record — two-way CRM sync friendly (push changes from your system of record). Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
          * @summary Update a customer
          * @param {CustomerApiUpdateCustomerRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -431,6 +436,13 @@ export interface CustomerApiCreateCustomerRequest {
      * @memberof CustomerApiCreateCustomer
      */
     readonly customerCreateRequest: CustomerCreateRequest
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+     * @type {string}
+     * @memberof CustomerApiCreateCustomer
+     */
+    readonly idempotencyKey?: string
 }
 
 /**
@@ -553,7 +565,7 @@ export interface CustomerApiUpdateCustomerRequest {
  */
 export class CustomerApi extends BaseAPI {
     /**
-     * Adds a new customer record to the current business. Address (street, city, postal_code, ...) and coordinates (latitude/longitude) live under the nested `address` object. service_area_id must be a valid service area UUID belonging to this business.
+     * Creates a customer record — the client/account profile a job request (work order) is booked against; use it to import or sync customers from your own CRM, website lead form or intake flow. Address (street, city, postal_code, ...) and coordinates (latitude/longitude) live under the nested `address` object. service_area_id must be a valid service area UUID belonging to this business.
      * @summary Create a customer
      * @param {CustomerApiCreateCustomerRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -561,11 +573,11 @@ export class CustomerApi extends BaseAPI {
      * @memberof CustomerApi
      */
     public createCustomer(requestParameters: CustomerApiCreateCustomerRequest, options?: RawAxiosRequestConfig) {
-        return CustomerApiFp(this.configuration).createCustomer(requestParameters.customerCreateRequest, options).then((request) => request(this.axios, this.basePath));
+        return CustomerApiFp(this.configuration).createCustomer(requestParameters.customerCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
-     * Soft-deletes a customer record.
+     * Soft-deletes a customer record, removing it from the active customer directory; existing bookings keep their customer snapshot.
      * @summary Delete a customer
      * @param {CustomerApiDeleteCustomerRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -577,7 +589,7 @@ export class CustomerApi extends BaseAPI {
     }
 
     /**
-     * Returns the full profile, contact details and spending summary. contact.preferred_technician includes {id, name}. contact.service_area includes {id, name}. contact.address.latitude / contact.address.longitude are null if no coordinates saved.
+     * Returns the full customer record: profile, contact details, tier and lifetime spending summary — a 360° client view for support, upsell or CRM enrichment. contact.preferred_technician includes {id, name}. contact.service_area includes {id, name}. contact.address.latitude / contact.address.longitude are null if no coordinates saved.
      * @summary Get a customer
      * @param {CustomerApiGetCustomerRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -589,7 +601,7 @@ export class CustomerApi extends BaseAPI {
     }
 
     /**
-     * Returns a paginated, searchable list of customers for the current business.
+     * Returns a paginated, searchable directory of the business\'s customer records — the customer database (CRM) behind every booking and work order. Supports the `since`/`next_since` cursor for incremental sync into an external CRM, ERP or marketing tool.
      * @summary List customers
      * @param {CustomerApiListCustomersRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -601,7 +613,7 @@ export class CustomerApi extends BaseAPI {
     }
 
     /**
-     * Replaces mutable fields on a customer record. Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
+     * Replaces mutable fields on a customer record — two-way CRM sync friendly (push changes from your system of record). Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
      * @summary Update a customer
      * @param {CustomerApiUpdateCustomerRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.

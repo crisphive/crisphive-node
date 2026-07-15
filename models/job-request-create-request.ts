@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * CrispHive Developer API
- * Public REST API for integrating CrispHive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
+ * Crisphive Developer API
+ * Public REST API for integrating Crisphive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
  *
  * The version of the OpenAPI document: 1.0
  * 
@@ -48,10 +48,32 @@ export interface JobRequestCreateRequest {
      */
     'job_type_id'?: string;
     /**
+     * Scheduling priority. Optional; omitted bookings receive the business\'s default_priority setting (assignment settings, default p2). p0=emergency (interrupt-driven insert), p1=top (displaced only by p0), p2=standard, p3=deferrable (first candidate for displacement).
+     * @type {string}
+     * @memberof JobRequestCreateRequest
+     */
+    'priority'?: JobRequestCreateRequestPriorityEnum;
+    /**
      * UUIDs of the skills the customer desires for this job. Optional; up to 20.
      * @type {Array<string>}
      * @memberof JobRequestCreateRequest
      */
     'skill_ids'?: Array<string>;
+    /**
+     * SLA deadline (business-local naive datetime, e.g. \"2030-06-14T17:00:00\"). Optional; ONLY valid together with priority=p1 — arms the auto-escalation clock (the job escalates to p0 as breach risk crosses the business\'s safety buffer). Must be in the future.
+     * @type {string}
+     * @memberof JobRequestCreateRequest
+     */
+    'sla_deadline'?: string;
 }
+
+export const JobRequestCreateRequestPriorityEnum = {
+    P0: 'p0',
+    P1: 'p1',
+    P2: 'p2',
+    P3: 'p3'
+} as const;
+
+export type JobRequestCreateRequestPriorityEnum = typeof JobRequestCreateRequestPriorityEnum[keyof typeof JobRequestCreateRequestPriorityEnum];
+
 

@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * CrispHive Developer API
- * Public REST API for integrating CrispHive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
+ * Crisphive Developer API
+ * Public REST API for integrating Crisphive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
  *
  * The version of the OpenAPI document: 1.0
  * 
@@ -22,19 +22,51 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CommitEmergencyReschedule200Response } from '../models';
+// @ts-ignore
+import type { CommitJobRequestMove200Response } from '../models';
+// @ts-ignore
 import type { CreateJobRequest200Response } from '../models';
 // @ts-ignore
 import type { GetJobRequest200Response } from '../models';
 // @ts-ignore
 import type { GetJobRequestTimeline200Response } from '../models';
 // @ts-ignore
+import type { GetTechnicianSchedule200Response } from '../models';
+// @ts-ignore
+import type { JobRequestConfirmRequest } from '../models';
+// @ts-ignore
 import type { JobRequestCreateRequest } from '../models';
+// @ts-ignore
+import type { JobRequestEmergencyCandidatesRequest } from '../models';
+// @ts-ignore
+import type { JobRequestEmergencyCommitRequest } from '../models';
+// @ts-ignore
+import type { JobRequestEmergencyPreviewRequest } from '../models';
+// @ts-ignore
+import type { JobRequestMoveCommitReq } from '../models';
+// @ts-ignore
+import type { JobRequestMovePreviewReq } from '../models';
+// @ts-ignore
+import type { JobRequestQuoteRequest } from '../models';
+// @ts-ignore
+import type { JobRequestUpdatePriorityRequest } from '../models';
+// @ts-ignore
+import type { ListCrewCandidates200Response } from '../models';
+// @ts-ignore
+import type { ListEmergencyCandidates200Response } from '../models';
 // @ts-ignore
 import type { ListJobRequestBookingWindows200Response } from '../models';
 // @ts-ignore
 import type { ListJobRequestChanges200Response } from '../models';
 // @ts-ignore
 import type { ListJobRequests200Response } from '../models';
+// @ts-ignore
+import type { ListMatchingSlots200Response } from '../models';
+// @ts-ignore
+import type { ListNearbyTechnicians200Response } from '../models';
+// @ts-ignore
+import type { ResponseEnvelope } from '../models';
 /**
  * JobRequestBusinessApi - axios parameter creator
  * @export
@@ -42,14 +74,155 @@ import type { ListJobRequests200Response } from '../models';
 export const JobRequestBusinessApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
-         * @summary Create a job request (business actor)
-         * @param {JobRequestCreateRequest} jobRequestCreateRequest Booking payload
-         * @param {string} [xTimezone] Customer IANA timezone
+         * Applies the cascade previewed by /emergency/preview: assigns the emergency job to the technician and pushes the displaced jobs back (or, with `displacement_mode=reassign`, re-staffs them onto their previewed alternates first), atomically. Supports Idempotency-Key. The server recomputes the plan under a lock and fences each job on its status_version — if anything changed since the preview it returns 409 EMERGENCY_RESCHEDULE_PLAN_DRIFTED (re-preview). Same body as preview + optional `emergency_expected_version`. Isolated feature (see EMERGENCY_RESCHEDULE_DESIGN.md). 409 NEXT STEPS: EMERGENCY_RESCHEDULE_PLAN_DRIFTED — the schedule changed between your preview and this commit (another booking/move won a lane): call /preview again, show the fresh plan, then commit. EMERGENCY_RESCHEDULE_SLOT_OCCUPIED — landing window blocked by an immovable anchor (P0/crew/multi-day): another tech or time. Other codes — same remedies as /candidates.
+         * @summary Commit emergency insert + cascade reschedule
+         * @param {JobRequestEmergencyCommitRequest} jobRequestEmergencyCommitRequest emergency insert spec
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        createJobRequest: async (jobRequestCreateRequest: JobRequestCreateRequest, xTimezone?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        commitEmergencyReschedule: async (jobRequestEmergencyCommitRequest: JobRequestEmergencyCommitRequest, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobRequestEmergencyCommitRequest' is not null or undefined
+            assertParamExists('commitEmergencyReschedule', 'jobRequestEmergencyCommitRequest', jobRequestEmergencyCommitRequest)
+            const localVarPath = `/job-requests/emergency/commit`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(jobRequestEmergencyCommitRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Applies the move previewed by /move/preview: places the job on the technician at the new time and pushes the displaced jobs back, atomically (per-tech advisory lock; the server recomputes the plan and fences each job on its status_version — drift since the preview returns 409 SCHEDULE_MOVE_PLAN_DRIFTED, re-preview). Same body as preview + optional `expected_version`. See SCHEDULE_BOARD_DESIGN.md. 409 NEXT STEPS: SCHEDULE_MOVE_PLAN_DRIFTED — the schedule changed since your preview (or expected_move_ids no longer match): re-preview, show the fresh plan, commit again. All other codes — same remedies as /move/preview.
+         * @summary Commit a schedule-board job move
+         * @param {string} id Job request ID (UUID or short_code)
+         * @param {JobRequestMoveCommitReq} jobRequestMoveCommitReq move spec
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        commitJobRequestMove: async (id: string, jobRequestMoveCommitReq: JobRequestMoveCommitReq, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('commitJobRequestMove', 'id', id)
+            // verify required parameter 'jobRequestMoveCommitReq' is not null or undefined
+            assertParamExists('commitJobRequestMove', 'jobRequestMoveCommitReq', jobRequestMoveCommitReq)
+            const localVarPath = `/job-requests/{id}/move/commit`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(jobRequestMoveCommitReq, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Fires the customer-actor `confirm_booking` action from the BUSINESS surface (audited as business_on_behalf). Two uses: (1) LIVE — staff confirm a slot for a customer who booked by phone; (2) SANDBOX — the customer magic-token surface is live-only (a sandbox job\'s link can never reach a real customer), so this is the ONLY way to drive a sandbox test job past booking (book → quote → confirm → assign → complete). Body carries the customer-chosen scheduled_at (business-local naive datetime). DECISION TABLE — every 409 this endpoint returns, and the correct NEXT STEP (branch on error_code, never on the HTTP status): • JOB_REQUEST_STAGE_CONFLICT — the job changed since you read it (NOTE: every FAILED confirm attempt also bumps status_version by design). Next: re-GET the job, retry with the fresh status_version. • JOB_REQUEST_ACTION_NOT_PENDING — the job is no longer at the confirm step (usually: already confirmed). Next: re-GET and show current status; do not retry. • JOB_REQUEST_NO_TECHNICIAN_AVAILABLE — the TIME is infeasible for everyone (outside working hours / the customer window, or nobody qualifies). Next: pick another time via booking-windows / time-segments. NOT an emergency case — displacement cannot conjure capacity. • JOB_REQUEST_TECH_INFEASIBLE — the FORCED technician can never take the job then; `data.reason` says why: cannot_arrive_in_time (commute/shift-start — `data.earliest_feasible_at` (RFC3339 UTC) is the first same-day time they CAN be on site → offer it) | missing_required_skills | not_available_today | not_lead_tier. Next: keep the tech and reschedule to earliest_feasible_at+, OR keep the time and drop technician_id (auto-pick) / choose another tech from time-segments. NOT an emergency case. • JOB_REQUEST_P0_REQUIRES_DISPLACEMENT — the ONLY code that routes to the EMERGENCY flow: the job is P0, the tech qualifies, but the lane is genuinely occupied. Next: POST emergency/candidates → preview → commit (the commit auto-confirms). Caveat: if the occupying jobs are themselves P0 the preview will reject with EMERGENCY_RESCHEDULE_SLOT_OCCUPIED (P0 never displaces P0) — then pick another tech/time.
+         * @summary Confirm a booking on behalf of the customer
+         * @param {string} id Job request ID
+         * @param {JobRequestConfirmRequest} jobRequestConfirmRequest Chosen slot (scheduled_at) + optional technician_id force-assign (P0–P3 flow: pins the ranked candidate, feasibility still enforced)
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        confirmJobRequest: async (id: string, jobRequestConfirmRequest: JobRequestConfirmRequest, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('confirmJobRequest', 'id', id)
+            // verify required parameter 'jobRequestConfirmRequest' is not null or undefined
+            assertParamExists('confirmJobRequest', 'jobRequestConfirmRequest', jobRequestConfirmRequest)
+            const localVarPath = `/job-requests/{id}/confirm`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(jobRequestConfirmRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Books a field-service job — the work order that enters the dispatch & scheduling pipeline. Send the customer\'s UUID plus requested `job_dates` (date + morning/afternoon/evening periods, ideally offered from GET /job-requests/booking-windows), optional `job_type_id` (service catalog), `skill_ids` (required technician qualifications) and a free-text description. Quoting, technician/crew assignment and completion then advance the work order through the business\'s workflow.
+         * @summary Create a job request
+         * @param {JobRequestCreateRequest} jobRequestCreateRequest Booking payload
+         * @param {string} [xTimezone] Customer IANA timezone
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key returns the original booking instead of creating a duplicate
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createJobRequest: async (jobRequestCreateRequest: JobRequestCreateRequest, xTimezone?: string, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             // verify required parameter 'jobRequestCreateRequest' is not null or undefined
             assertParamExists('createJobRequest', 'jobRequestCreateRequest', jobRequestCreateRequest)
             const localVarPath = `/job-requests`;
@@ -75,6 +248,9 @@ export const JobRequestBusinessApiAxiosParamCreator = function (configuration?: 
             if (xTimezone != null) {
                 localVarHeaderParameter['X-Timezone'] = String(xTimezone);
             }
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
             setSearchParams(localVarUrlObj, localVarQueryParameter);
             let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
             localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
@@ -86,7 +262,7 @@ export const JobRequestBusinessApiAxiosParamCreator = function (configuration?: 
             };
         },
         /**
-         * 
+         * Returns the full work order: current workflow status, quoted duration, confirmed schedule, customer contact snapshot and the assigned technician / crew — everything a dispatcher or an external field-service system needs to track one job.
          * @summary Get a job request
          * @param {string} id Job request ID (UUID or short_code)
          * @param {*} [options] Override http request option.
@@ -124,8 +300,8 @@ export const JobRequestBusinessApiAxiosParamCreator = function (configuration?: 
             };
         },
         /**
-         * Per-status events[] composed from workflow snapshot + scattered typed cols + action_audit. FE renders as the Job Timeline panel (completed step = filled check, current = outline ring, upcoming = empty). entered_at nil for upcoming steps + older jobs missing the typed-col backfill.
-         * @summary Job timeline (business surface — also serves tech via BusinessAuth)
+         * Per-status progress of a job\'s lifecycle (e.g. booked → confirmed → on the way → arrived → completed, following the business\'s configured workflow) — render it as a job-tracking timeline. Each status carries its state (completed | current | upcoming), when the job entered it, and the actions fired within it. entered_at may be null for upcoming steps and for older jobs predating the backfill.
+         * @summary Job timeline
          * @param {string} id Job request ID (UUID or short_code)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -162,8 +338,149 @@ export const JobRequestBusinessApiAxiosParamCreator = function (configuration?: 
             };
         },
         /**
-         * 
-         * @summary Booking availability (business actor)
+         * The technician\'s ACTUAL occupancy over a date range: every job session on their lane (solo/lead and crew) plus approved time-off blocks. Weekly recurring working hours come from the technician-availability endpoints — combine both for the full availability picture (\"get crew availability\"). from/to are business-local dates (YYYY-MM-DD, inclusive); omitted = today .. +7 days; range max 31 days.
+         * @summary One technician\'s real schedule (sessions + time off)
+         * @param {string} id Technician ID
+         * @param {string} [from] Start date (YYYY-MM-DD, business-local; default today)
+         * @param {string} [to] End date (YYYY-MM-DD, inclusive; default from+7d; max range 31 days)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTechnicianSchedule: async (id: string, from?: string, to?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('getTechnicianSchedule', 'id', id)
+            const localVarPath = `/technicians/{id}/schedule`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (from !== undefined) {
+                localVarQueryParameter['from'] = from;
+            }
+
+            if (to !== undefined) {
+                localVarQueryParameter['to'] = to;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Technicians who can actually take this job, matched and ranked by the smart-assignment engine — skills per crew slot, weekly availability, existing schedule, time off and travel are all checked; each candidate carries a score breakdown (distance, travel, matched skills) plus the exact on-site session plan they would work. NOT a raw roster list (use GET /technicians for that). Returns the ranked feasible LEAD pool by default; pass include_buddies=true to also return per-slot buddy pools, include_vehicle=true to include the available-vehicle list. force_lead_id checks one specific technician: returns only that lead (with their crew combo) if feasible, else 409 JOB_REQUEST_NO_TECHNICIAN_AVAILABLE.
+         * @summary Matching crew candidates for a job
+         * @param {string} id Job request ID or short_code
+         * @param {boolean} [includeBuddies] Also return buddy candidate pools
+         * @param {boolean} [includeVehicle] Also return the available-vehicle list
+         * @param {string} [forceLeadId] Check a specific technician as lead — returns only that lead if feasible, else 409
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listCrewCandidates: async (id: string, includeBuddies?: boolean, includeVehicle?: boolean, forceLeadId?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('listCrewCandidates', 'id', id)
+            const localVarPath = `/job-requests/{id}/crew-candidates`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (includeBuddies !== undefined) {
+                localVarQueryParameter['include_buddies'] = includeBuddies;
+            }
+
+            if (includeVehicle !== undefined) {
+                localVarQueryParameter['include_vehicle'] = includeVehicle;
+            }
+
+            if (forceLeadId !== undefined) {
+                localVarQueryParameter['force_lead_id'] = forceLeadId;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Returns the technicians who could take the emergency job at the requested start, ranked FASTEST-ARRIVAL first (arrival beats route efficiency for a P0). The response also carries a historical `crew_recommendation` (median crew size on comparable completed jobs + mandatory disclaimer — AC-2). Booked technicians are still candidates — each entry carries the displacement preview (which lower-priority jobs would be pushed, per day) that committing to them would cause; total_moves=0 means a free slot. P0 jobs are never displaced; P1 only by a P0. ETA is estimated from the technician\'s start location (no live GPS). Feed the chosen technician_id into emergency/preview + emergency/commit. 409 NEXT STEPS: EMERGENCY_RESCHEDULE_NOT_ELIGIBLE — the job cannot be emergency-inserted (not P0, already started/completed/archived, or not quoted): fix the job state or use a normal confirm. EMERGENCY_RESCHEDULE_CREW_UNSUPPORTED — crew jobs cannot use the emergency flow (v1): staff via confirm/reassign instead. EMERGENCY_RESCHEDULE_MULTIDAY_UNSUPPORTED — a confirmed multi-day job cannot be re-inserted (v1): use the normal reassign flow. EMERGENCY_RESCHEDULE_NO_WORKING_DAY — the chosen date has no working hours: pick a working day. EMERGENCY_RESCHEDULE_IN_PAST — start time already passed: pick a future time.
+         * @summary Rank technicians for a P0 emergency insert
+         * @param {JobRequestEmergencyCandidatesRequest} jobRequestEmergencyCandidatesRequest Emergency job + desired start
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listEmergencyCandidates: async (jobRequestEmergencyCandidatesRequest: JobRequestEmergencyCandidatesRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobRequestEmergencyCandidatesRequest' is not null or undefined
+            assertParamExists('listEmergencyCandidates', 'jobRequestEmergencyCandidatesRequest', jobRequestEmergencyCandidatesRequest)
+            const localVarPath = `/job-requests/emergency/candidates`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(jobRequestEmergencyCandidatesRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Real-time appointment availability from the scheduling engine: returns the bookable date + time-period windows given technician capacity, working hours and service-territory coverage. Call this before creating a job request and offer the customer ONLY the returned windows — it prevents unschedulable bookings.
+         * @summary Booking availability
          * @param {string} xTimezone Customer IANA timezone
          * @param {string} [from] Start YYYY-MM-DD
          * @param {string} [to] End YYYY-MM-DD
@@ -212,14 +529,14 @@ export const JobRequestBusinessApiAxiosParamCreator = function (configuration?: 
             };
         },
         /**
-         * Keep your own copy of bookings in sync WITHOUT re-listing everything: returns the job requests whose state changed (created, status transition, reschedule, soft-delete/archive) at or after the `since` cursor, ordered oldest-change-first (updated_at ASC).  How to use it: (1) On your first poll OMIT `since` — the server primes the cursor at \"now\", returns no items and a `next_since`. (2) Store `next_since` and pass it as `since` on the next poll. (3) Apply each returned item to your store by UPSERTING on `id` (the server re-scans a ~5s safety window, so the same job may appear again — never blindly append). (4) If `has_more` is true the page filled to `limit` and more changes are already waiting — poll again immediately; otherwise wait your normal interval (e.g. 5–15s).  This is NOT pagination — it is a time-keyed change feed. Use the paginated GET /job-requests for the initial bulk load, then this endpoint to stay live. Filters (status_keys, customer_id, …) narrow the feed to the slice you care about.
+         * Keep an external system (your CRM, ERP or field-service tool) in sync with bookings WITHOUT re-listing everything: returns the job requests (work orders) whose state changed (created, status transition, reschedule, soft-delete/archive) at or after the `since` cursor, ordered oldest-change-first (updated_at ASC).  How to use it: (1) On your first poll OMIT `since` — the server primes the cursor at \"now\", returns no items and a `next_since`. (2) Store `next_since` and pass it as `since` on the next poll. (3) Apply each returned item to your store by UPSERTING on `id` (the server re-scans a ~5s safety window, so the same job may appear again — never blindly append). (4) If `has_more` is true the page filled to `limit` and more changes are already waiting — poll again immediately; otherwise wait your normal interval (e.g. 5–15s).  This is NOT pagination — it is a time-keyed change feed. Use the paginated GET /job-requests for the initial bulk load, then this endpoint to stay live. Filters (status_keys, customer_id, …) narrow the feed to the slice you care about.
          * @summary Poll for new & changed job requests (sync feed)
          * @param {string} [statusKeys] Comma-separated status slugs — only surface changes to jobs in these statuses
-         * @param {string} [priority] Priority filter (normal|emergency)
+         * @param {string} [priority] Priority filter (p0|p1|p2|p3)
          * @param {string} [customerId] Only changes to this customer\&#39;s jobs (UUID)
          * @param {string} [technicianId] Only changes to jobs assigned to this technician (UUID)
-         * @param {string} [scheduledFrom] Filter from (YYYY-MM-DD or RFC3339); range is [from, to)
-         * @param {string} [scheduledTo] Filter to (YYYY-MM-DD or RFC3339), exclusive
+         * @param {string} [scheduledFrom] Filter from (YYYY-MM-DD &#x3D; start of that day in the business timezone, or RFC3339); range is [from, to)
+         * @param {string} [scheduledTo] Filter to (YYYY-MM-DD &#x3D; end of that day in the business timezone, or RFC3339), exclusive
          * @param {string} [since] RFC3339 cursor from the prior response\&#39;s next_since. OMIT on the first poll to prime the cursor at server-now.
          * @param {number} [limit] Max changes per poll (default 15, max 1000). If the page fills, has_more&#x3D;true.
          * @param {*} [options] Override http request option.
@@ -286,22 +603,24 @@ export const JobRequestBusinessApiAxiosParamCreator = function (configuration?: 
             };
         },
         /**
-         * 
+         * Paginated list of the business\'s bookings (work orders) with dispatch-oriented filters: workflow status, customer, assigned technician, scheduled date range and free-text search over code/description. This is also the SCHEDULE query: combine technician_id + scheduled_from/scheduled_to to read one technician\'s agenda for a day or week (e.g. \"what is Alex doing tomorrow\"), or just the date range for the whole team\'s calendar.
          * @summary List job requests
          * @param {string} [statusKeys] Comma-separated status slugs
          * @param {string} [status] active (default) | archived | all
+         * @param {string} [priority] Priority filter (p0|p1|p2|p3)
          * @param {string} [customerId] Customer UUID
          * @param {string} [technicianId] Technician UUID
-         * @param {string} [scheduledFrom] Filter from (YYYY-MM-DD or RFC3339); range is [from, to)
-         * @param {string} [scheduledTo] Filter to (YYYY-MM-DD or RFC3339), exclusive
+         * @param {string} [serviceAreaId] Service-area UUID (board zone filter)
+         * @param {string} [scheduledFrom] Filter from (YYYY-MM-DD &#x3D; start of that day in the business timezone, or RFC3339); range is [from, to)
+         * @param {string} [scheduledTo] Filter to (YYYY-MM-DD &#x3D; end of that day in the business timezone, or RFC3339), exclusive
          * @param {string} [q] Search short_code or description (case-insensitive, partial match)
-         * @param {string} [sort] Sort key
+         * @param {string} [sort] Sort key: created_at:desc (default) | created_at:asc | scheduled_at:asc | scheduled_at:desc | priority:asc (P0 first) | priority:desc
          * @param {number} [page] Page number
          * @param {number} [limit] Page size
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listJobRequests: async (statusKeys?: string, status?: string, customerId?: string, technicianId?: string, scheduledFrom?: string, scheduledTo?: string, q?: string, sort?: string, page?: number, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        listJobRequests: async (statusKeys?: string, status?: string, priority?: string, customerId?: string, technicianId?: string, serviceAreaId?: string, scheduledFrom?: string, scheduledTo?: string, q?: string, sort?: string, page?: number, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/job-requests`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -326,12 +645,20 @@ export const JobRequestBusinessApiAxiosParamCreator = function (configuration?: 
                 localVarQueryParameter['status'] = status;
             }
 
+            if (priority !== undefined) {
+                localVarQueryParameter['priority'] = priority;
+            }
+
             if (customerId !== undefined) {
                 localVarQueryParameter['customer_id'] = customerId;
             }
 
             if (technicianId !== undefined) {
                 localVarQueryParameter['technician_id'] = technicianId;
+            }
+
+            if (serviceAreaId !== undefined) {
+                localVarQueryParameter['service_area_id'] = serviceAreaId;
             }
 
             if (scheduledFrom !== undefined) {
@@ -369,6 +696,289 @@ export const JobRequestBusinessApiAxiosParamCreator = function (configuration?: 
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Bookable arrival-window slots for a quoted job, computed by the smart-assignment matching engine: each slot lists the technicians actually available to start then (skills, weekly availability, existing schedule, time off and travel all checked), with a per-technician match score. Use it to find and offer appointment times an agent or integration can then confirm (POST /job-requests/{id}/confirm with the slot\'s business_time.datetime). Same grid the end-customer\'s slot picker shows; slot width defaults to the business\'s arrival window — override via ?step_minutes (5–240). The job must be quoted first (the quote sets the visit duration the matcher schedules).
+         * @summary Matching time slots for a quoted job
+         * @param {string} id Job request ID (UUID or short_code)
+         * @param {number} [stepMinutes] Slot step in minutes (default: business arrival window, 5–240)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listMatchingSlots: async (id: string, stepMinutes?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('listMatchingSlots', 'id', id)
+            const localVarPath = `/job-requests/{id}/time-segments`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (stepMinutes !== undefined) {
+                localVarQueryParameter['step_minutes'] = stepMinutes;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Ranks who could serve a hypothetical visit at (lat,lng) starting `at` for `duration_minutes` — the engine applies the REAL hard filters (weekly hours, existing schedule, approved time-off, geographic service areas, optional skill floor) and returns candidates nearest-arrival first. ETA origin is each technician\'s start location (no live GPS). Use before creating a booking to propose realistic arrivals.
+         * @summary Find nearby feasible technicians (job-less location query)
+         * @param {number} lat Latitude of the service location
+         * @param {number} lng Longitude of the service location
+         * @param {string} [at] Visit start (RFC3339, e.g. 2026-07-20T14:00:00Z; default now)
+         * @param {number} [durationMinutes] Visit length in minutes (default 60; 15–480)
+         * @param {string} [skillIds] Comma-separated skill UUIDs to require/match
+         * @param {number} [limit] Max candidates (default 10, max 20)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listNearbyTechnicians: async (lat: number, lng: number, at?: string, durationMinutes?: number, skillIds?: string, limit?: number, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'lat' is not null or undefined
+            assertParamExists('listNearbyTechnicians', 'lat', lat)
+            // verify required parameter 'lng' is not null or undefined
+            assertParamExists('listNearbyTechnicians', 'lng', lng)
+            const localVarPath = `/technicians/nearby`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'GET', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+            if (lat !== undefined) {
+                localVarQueryParameter['lat'] = lat;
+            }
+
+            if (lng !== undefined) {
+                localVarQueryParameter['lng'] = lng;
+            }
+
+            if (at !== undefined) {
+                localVarQueryParameter['at'] = at;
+            }
+
+            if (durationMinutes !== undefined) {
+                localVarQueryParameter['duration_minutes'] = durationMinutes;
+            }
+
+            if (skillIds !== undefined) {
+                localVarQueryParameter['skill_ids'] = skillIds;
+            }
+
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit;
+            }
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Computes (WITHOUT writing) the cascade of inserting an emergency job onto a technician at a chosen time: where the emergency lands + every job pushed back, grouped per business-local day. `displacement_mode=reassign` instead hands each displaced job to another feasible technician at its ORIGINAL window (same-day promise) — jobs with no alternate capacity fall back to reschedule and stay in `days`. `mode=overtime` keeps everyone same-day (tech works late); `mode=next_day` rolls overflow to the next working day(s). Read-only — safe to call repeatedly; commit is a separate endpoint. Isolated feature (see EMERGENCY_RESCHEDULE_DESIGN.md). 409 NEXT STEPS: EMERGENCY_RESCHEDULE_SLOT_OCCUPIED — the landing window is blocked by a job the cascade may NOT move (another P0, a crew or multi-day job): choose another technician (walk the /candidates ranking) or another time; displacement never touches P0/crew/multi-day anchors. EMERGENCY_RESCHEDULE_NOT_ELIGIBLE / CREW_UNSUPPORTED / MULTIDAY_UNSUPPORTED / NO_WORKING_DAY / IN_PAST — same remedies as /candidates.
+         * @summary Preview emergency insert + cascade reschedule
+         * @param {JobRequestEmergencyPreviewRequest} jobRequestEmergencyPreviewRequest emergency insert spec
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        previewEmergencyReschedule: async (jobRequestEmergencyPreviewRequest: JobRequestEmergencyPreviewRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobRequestEmergencyPreviewRequest' is not null or undefined
+            assertParamExists('previewEmergencyReschedule', 'jobRequestEmergencyPreviewRequest', jobRequestEmergencyPreviewRequest)
+            const localVarPath = `/job-requests/emergency/preview`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(jobRequestEmergencyPreviewRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Computes (WITHOUT writing) the outcome of moving a confirmed job to a new time and/or technician: where it lands, every later job pushed back per `mode`, and the warnings the coordinator would accept (displaced jobs leaving their confirmed windows, overtime). Same technician = pure time move; different technician = manual reassign. Read-only — safe to call repeatedly while dragging; commit is a separate endpoint. See SCHEDULE_BOARD_DESIGN.md. Warning detail: a TECH_NOT_FEASIBLE warning carries `reason` = `cannot_arrive_in_time` (commute from the tech day-start location / shift start; `earliest_feasible_at` (RFC3339 UTC) is the first same-day time they CAN be on site — suggest it as the drop slot) | `missing_required_skills` | `not_available_today` (no working hours, approved time off, or outside the service area) | `not_lead_tier`. For a P0 move this warning is advisory (coordinator may commit anyway); for p1/p2/p3 the same condition is the hard 409 SCHEDULE_MOVE_TECH_INFEASIBLE. 409 NEXT STEPS: SCHEDULE_MOVE_NOT_ELIGIBLE (job unconfirmed/unquoted/archived/completed — not movable) · SCHEDULE_MOVE_IN_PROGRESS (tech already executing — do not move) · SCHEDULE_MOVE_IN_PAST (pick a future time) · SCHEDULE_MOVE_OUTSIDE_WINDOW (landing time outside the customer-confirmed window — hard block; pick a time inside it) · SCHEDULE_MOVE_SLOT_OCCUPIED (landing window blocked by an immovable anchor — another tech/time) · SCHEDULE_MOVE_TECH_INFEASIBLE (non-P0 hard block: target tech not qualified/available — see the TECH_NOT_FEASIBLE warning reasons; change tech or time) · SCHEDULE_MOVE_MULTIDAY_UNSUPPORTED (multi-day jobs not movable v1) · SCHEDULE_MOVE_NO_WORKING_DAY (pick a working day) · SCHEDULE_MOVE_REQUIRES_FREE_SLOT (non-P0 moves may not displace — free capacity only, unless the owner enables allow_non_p0_displacement) · SCHEDULE_MOVE_CREW_UNSTAFFABLE (a crew slot has no feasible replacement at the new time — another time).
+         * @summary Preview a schedule-board job move
+         * @param {string} id Job request ID (UUID or short_code)
+         * @param {JobRequestMovePreviewReq} jobRequestMovePreviewReq move spec
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        previewJobRequestMove: async (id: string, jobRequestMovePreviewReq: JobRequestMovePreviewReq, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('previewJobRequestMove', 'id', id)
+            // verify required parameter 'jobRequestMovePreviewReq' is not null or undefined
+            assertParamExists('previewJobRequestMove', 'jobRequestMovePreviewReq', jobRequestMovePreviewReq)
+            const localVarPath = `/job-requests/{id}/move/preview`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(jobRequestMovePreviewReq, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Sends the quote: sets quoted_at + duration cols, advances pending_action to confirm_booking. Status stays `booking`.
+         * @summary Fire quote (FIXED action — business)
+         * @param {string} id Job request ID
+         * @param {JobRequestQuoteRequest} jobRequestQuoteRequest Quote payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        quoteJobRequest: async (id: string, jobRequestQuoteRequest: JobRequestQuoteRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('quoteJobRequest', 'id', id)
+            // verify required parameter 'jobRequestQuoteRequest' is not null or undefined
+            assertParamExists('quoteJobRequest', 'jobRequestQuoteRequest', jobRequestQuoteRequest)
+            const localVarPath = `/job-requests/{id}/quote`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(jobRequestQuoteRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Sets the P0–P3 priority on a non-archived, non-completed job (Owner / Administrator / Booking Coordinator). Allowed values: \"p0\" (emergency, interrupt-driven) | \"p1\" (top — displaced only by p0; may carry an sla_deadline arming auto-escalation) | \"p2\" (standard) | \"p3\" (deferrable, first displacement victim). sla_deadline is only valid with p1 and must be in the future (business-local naive datetime); moving away from p1 disarms the SLA clock. Accepts UUID or short_code in :id.
+         * @summary Set job priority (scheduling staff)
+         * @param {string} id Job request ID or short_code
+         * @param {JobRequestUpdatePriorityRequest} jobRequestUpdatePriorityRequest Priority payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateJobPriority: async (id: string, jobRequestUpdatePriorityRequest: JobRequestUpdatePriorityRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateJobPriority', 'id', id)
+            // verify required parameter 'jobRequestUpdatePriorityRequest' is not null or undefined
+            assertParamExists('updateJobPriority', 'jobRequestUpdatePriorityRequest', jobRequestUpdatePriorityRequest)
+            const localVarPath = `/job-requests/{id}/priority`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PATCH', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(jobRequestUpdatePriorityRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -380,21 +990,66 @@ export const JobRequestBusinessApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = JobRequestBusinessApiAxiosParamCreator(configuration)
     return {
         /**
-         * 
-         * @summary Create a job request (business actor)
-         * @param {JobRequestCreateRequest} jobRequestCreateRequest Booking payload
-         * @param {string} [xTimezone] Customer IANA timezone
+         * Applies the cascade previewed by /emergency/preview: assigns the emergency job to the technician and pushes the displaced jobs back (or, with `displacement_mode=reassign`, re-staffs them onto their previewed alternates first), atomically. Supports Idempotency-Key. The server recomputes the plan under a lock and fences each job on its status_version — if anything changed since the preview it returns 409 EMERGENCY_RESCHEDULE_PLAN_DRIFTED (re-preview). Same body as preview + optional `emergency_expected_version`. Isolated feature (see EMERGENCY_RESCHEDULE_DESIGN.md). 409 NEXT STEPS: EMERGENCY_RESCHEDULE_PLAN_DRIFTED — the schedule changed between your preview and this commit (another booking/move won a lane): call /preview again, show the fresh plan, then commit. EMERGENCY_RESCHEDULE_SLOT_OCCUPIED — landing window blocked by an immovable anchor (P0/crew/multi-day): another tech or time. Other codes — same remedies as /candidates.
+         * @summary Commit emergency insert + cascade reschedule
+         * @param {JobRequestEmergencyCommitRequest} jobRequestEmergencyCommitRequest emergency insert spec
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async createJobRequest(jobRequestCreateRequest: JobRequestCreateRequest, xTimezone?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateJobRequest200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.createJobRequest(jobRequestCreateRequest, xTimezone, options);
+        async commitEmergencyReschedule(jobRequestEmergencyCommitRequest: JobRequestEmergencyCommitRequest, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CommitEmergencyReschedule200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.commitEmergencyReschedule(jobRequestEmergencyCommitRequest, idempotencyKey, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.commitEmergencyReschedule']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Applies the move previewed by /move/preview: places the job on the technician at the new time and pushes the displaced jobs back, atomically (per-tech advisory lock; the server recomputes the plan and fences each job on its status_version — drift since the preview returns 409 SCHEDULE_MOVE_PLAN_DRIFTED, re-preview). Same body as preview + optional `expected_version`. See SCHEDULE_BOARD_DESIGN.md. 409 NEXT STEPS: SCHEDULE_MOVE_PLAN_DRIFTED — the schedule changed since your preview (or expected_move_ids no longer match): re-preview, show the fresh plan, commit again. All other codes — same remedies as /move/preview.
+         * @summary Commit a schedule-board job move
+         * @param {string} id Job request ID (UUID or short_code)
+         * @param {JobRequestMoveCommitReq} jobRequestMoveCommitReq move spec
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async commitJobRequestMove(id: string, jobRequestMoveCommitReq: JobRequestMoveCommitReq, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CommitJobRequestMove200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.commitJobRequestMove(id, jobRequestMoveCommitReq, idempotencyKey, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.commitJobRequestMove']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Fires the customer-actor `confirm_booking` action from the BUSINESS surface (audited as business_on_behalf). Two uses: (1) LIVE — staff confirm a slot for a customer who booked by phone; (2) SANDBOX — the customer magic-token surface is live-only (a sandbox job\'s link can never reach a real customer), so this is the ONLY way to drive a sandbox test job past booking (book → quote → confirm → assign → complete). Body carries the customer-chosen scheduled_at (business-local naive datetime). DECISION TABLE — every 409 this endpoint returns, and the correct NEXT STEP (branch on error_code, never on the HTTP status): • JOB_REQUEST_STAGE_CONFLICT — the job changed since you read it (NOTE: every FAILED confirm attempt also bumps status_version by design). Next: re-GET the job, retry with the fresh status_version. • JOB_REQUEST_ACTION_NOT_PENDING — the job is no longer at the confirm step (usually: already confirmed). Next: re-GET and show current status; do not retry. • JOB_REQUEST_NO_TECHNICIAN_AVAILABLE — the TIME is infeasible for everyone (outside working hours / the customer window, or nobody qualifies). Next: pick another time via booking-windows / time-segments. NOT an emergency case — displacement cannot conjure capacity. • JOB_REQUEST_TECH_INFEASIBLE — the FORCED technician can never take the job then; `data.reason` says why: cannot_arrive_in_time (commute/shift-start — `data.earliest_feasible_at` (RFC3339 UTC) is the first same-day time they CAN be on site → offer it) | missing_required_skills | not_available_today | not_lead_tier. Next: keep the tech and reschedule to earliest_feasible_at+, OR keep the time and drop technician_id (auto-pick) / choose another tech from time-segments. NOT an emergency case. • JOB_REQUEST_P0_REQUIRES_DISPLACEMENT — the ONLY code that routes to the EMERGENCY flow: the job is P0, the tech qualifies, but the lane is genuinely occupied. Next: POST emergency/candidates → preview → commit (the commit auto-confirms). Caveat: if the occupying jobs are themselves P0 the preview will reject with EMERGENCY_RESCHEDULE_SLOT_OCCUPIED (P0 never displaces P0) — then pick another tech/time.
+         * @summary Confirm a booking on behalf of the customer
+         * @param {string} id Job request ID
+         * @param {JobRequestConfirmRequest} jobRequestConfirmRequest Chosen slot (scheduled_at) + optional technician_id force-assign (P0–P3 flow: pins the ranked candidate, feasibility still enforced)
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async confirmJobRequest(id: string, jobRequestConfirmRequest: JobRequestConfirmRequest, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.confirmJobRequest(id, jobRequestConfirmRequest, idempotencyKey, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.confirmJobRequest']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Books a field-service job — the work order that enters the dispatch & scheduling pipeline. Send the customer\'s UUID plus requested `job_dates` (date + morning/afternoon/evening periods, ideally offered from GET /job-requests/booking-windows), optional `job_type_id` (service catalog), `skill_ids` (required technician qualifications) and a free-text description. Quoting, technician/crew assignment and completion then advance the work order through the business\'s workflow.
+         * @summary Create a job request
+         * @param {JobRequestCreateRequest} jobRequestCreateRequest Booking payload
+         * @param {string} [xTimezone] Customer IANA timezone
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key returns the original booking instead of creating a duplicate
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createJobRequest(jobRequestCreateRequest: JobRequestCreateRequest, xTimezone?: string, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateJobRequest200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createJobRequest(jobRequestCreateRequest, xTimezone, idempotencyKey, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.createJobRequest']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         * Returns the full work order: current workflow status, quoted duration, confirmed schedule, customer contact snapshot and the assigned technician / crew — everything a dispatcher or an external field-service system needs to track one job.
          * @summary Get a job request
          * @param {string} id Job request ID (UUID or short_code)
          * @param {*} [options] Override http request option.
@@ -407,8 +1062,8 @@ export const JobRequestBusinessApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Per-status events[] composed from workflow snapshot + scattered typed cols + action_audit. FE renders as the Job Timeline panel (completed step = filled check, current = outline ring, upcoming = empty). entered_at nil for upcoming steps + older jobs missing the typed-col backfill.
-         * @summary Job timeline (business surface — also serves tech via BusinessAuth)
+         * Per-status progress of a job\'s lifecycle (e.g. booked → confirmed → on the way → arrived → completed, following the business\'s configured workflow) — render it as a job-tracking timeline. Each status carries its state (completed | current | upcoming), when the job entered it, and the actions fired within it. entered_at may be null for upcoming steps and for older jobs predating the backfill.
+         * @summary Job timeline
          * @param {string} id Job request ID (UUID or short_code)
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -420,8 +1075,52 @@ export const JobRequestBusinessApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
-         * @summary Booking availability (business actor)
+         * The technician\'s ACTUAL occupancy over a date range: every job session on their lane (solo/lead and crew) plus approved time-off blocks. Weekly recurring working hours come from the technician-availability endpoints — combine both for the full availability picture (\"get crew availability\"). from/to are business-local dates (YYYY-MM-DD, inclusive); omitted = today .. +7 days; range max 31 days.
+         * @summary One technician\'s real schedule (sessions + time off)
+         * @param {string} id Technician ID
+         * @param {string} [from] Start date (YYYY-MM-DD, business-local; default today)
+         * @param {string} [to] End date (YYYY-MM-DD, inclusive; default from+7d; max range 31 days)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async getTechnicianSchedule(id: string, from?: string, to?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<GetTechnicianSchedule200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.getTechnicianSchedule(id, from, to, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.getTechnicianSchedule']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Technicians who can actually take this job, matched and ranked by the smart-assignment engine — skills per crew slot, weekly availability, existing schedule, time off and travel are all checked; each candidate carries a score breakdown (distance, travel, matched skills) plus the exact on-site session plan they would work. NOT a raw roster list (use GET /technicians for that). Returns the ranked feasible LEAD pool by default; pass include_buddies=true to also return per-slot buddy pools, include_vehicle=true to include the available-vehicle list. force_lead_id checks one specific technician: returns only that lead (with their crew combo) if feasible, else 409 JOB_REQUEST_NO_TECHNICIAN_AVAILABLE.
+         * @summary Matching crew candidates for a job
+         * @param {string} id Job request ID or short_code
+         * @param {boolean} [includeBuddies] Also return buddy candidate pools
+         * @param {boolean} [includeVehicle] Also return the available-vehicle list
+         * @param {string} [forceLeadId] Check a specific technician as lead — returns only that lead if feasible, else 409
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listCrewCandidates(id: string, includeBuddies?: boolean, includeVehicle?: boolean, forceLeadId?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListCrewCandidates200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listCrewCandidates(id, includeBuddies, includeVehicle, forceLeadId, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.listCrewCandidates']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Returns the technicians who could take the emergency job at the requested start, ranked FASTEST-ARRIVAL first (arrival beats route efficiency for a P0). The response also carries a historical `crew_recommendation` (median crew size on comparable completed jobs + mandatory disclaimer — AC-2). Booked technicians are still candidates — each entry carries the displacement preview (which lower-priority jobs would be pushed, per day) that committing to them would cause; total_moves=0 means a free slot. P0 jobs are never displaced; P1 only by a P0. ETA is estimated from the technician\'s start location (no live GPS). Feed the chosen technician_id into emergency/preview + emergency/commit. 409 NEXT STEPS: EMERGENCY_RESCHEDULE_NOT_ELIGIBLE — the job cannot be emergency-inserted (not P0, already started/completed/archived, or not quoted): fix the job state or use a normal confirm. EMERGENCY_RESCHEDULE_CREW_UNSUPPORTED — crew jobs cannot use the emergency flow (v1): staff via confirm/reassign instead. EMERGENCY_RESCHEDULE_MULTIDAY_UNSUPPORTED — a confirmed multi-day job cannot be re-inserted (v1): use the normal reassign flow. EMERGENCY_RESCHEDULE_NO_WORKING_DAY — the chosen date has no working hours: pick a working day. EMERGENCY_RESCHEDULE_IN_PAST — start time already passed: pick a future time.
+         * @summary Rank technicians for a P0 emergency insert
+         * @param {JobRequestEmergencyCandidatesRequest} jobRequestEmergencyCandidatesRequest Emergency job + desired start
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listEmergencyCandidates(jobRequestEmergencyCandidatesRequest: JobRequestEmergencyCandidatesRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListEmergencyCandidates200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listEmergencyCandidates(jobRequestEmergencyCandidatesRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.listEmergencyCandidates']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Real-time appointment availability from the scheduling engine: returns the bookable date + time-period windows given technician capacity, working hours and service-territory coverage. Call this before creating a job request and offer the customer ONLY the returned windows — it prevents unschedulable bookings.
+         * @summary Booking availability
          * @param {string} xTimezone Customer IANA timezone
          * @param {string} [from] Start YYYY-MM-DD
          * @param {string} [to] End YYYY-MM-DD
@@ -435,14 +1134,14 @@ export const JobRequestBusinessApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Keep your own copy of bookings in sync WITHOUT re-listing everything: returns the job requests whose state changed (created, status transition, reschedule, soft-delete/archive) at or after the `since` cursor, ordered oldest-change-first (updated_at ASC).  How to use it: (1) On your first poll OMIT `since` — the server primes the cursor at \"now\", returns no items and a `next_since`. (2) Store `next_since` and pass it as `since` on the next poll. (3) Apply each returned item to your store by UPSERTING on `id` (the server re-scans a ~5s safety window, so the same job may appear again — never blindly append). (4) If `has_more` is true the page filled to `limit` and more changes are already waiting — poll again immediately; otherwise wait your normal interval (e.g. 5–15s).  This is NOT pagination — it is a time-keyed change feed. Use the paginated GET /job-requests for the initial bulk load, then this endpoint to stay live. Filters (status_keys, customer_id, …) narrow the feed to the slice you care about.
+         * Keep an external system (your CRM, ERP or field-service tool) in sync with bookings WITHOUT re-listing everything: returns the job requests (work orders) whose state changed (created, status transition, reschedule, soft-delete/archive) at or after the `since` cursor, ordered oldest-change-first (updated_at ASC).  How to use it: (1) On your first poll OMIT `since` — the server primes the cursor at \"now\", returns no items and a `next_since`. (2) Store `next_since` and pass it as `since` on the next poll. (3) Apply each returned item to your store by UPSERTING on `id` (the server re-scans a ~5s safety window, so the same job may appear again — never blindly append). (4) If `has_more` is true the page filled to `limit` and more changes are already waiting — poll again immediately; otherwise wait your normal interval (e.g. 5–15s).  This is NOT pagination — it is a time-keyed change feed. Use the paginated GET /job-requests for the initial bulk load, then this endpoint to stay live. Filters (status_keys, customer_id, …) narrow the feed to the slice you care about.
          * @summary Poll for new & changed job requests (sync feed)
          * @param {string} [statusKeys] Comma-separated status slugs — only surface changes to jobs in these statuses
-         * @param {string} [priority] Priority filter (normal|emergency)
+         * @param {string} [priority] Priority filter (p0|p1|p2|p3)
          * @param {string} [customerId] Only changes to this customer\&#39;s jobs (UUID)
          * @param {string} [technicianId] Only changes to jobs assigned to this technician (UUID)
-         * @param {string} [scheduledFrom] Filter from (YYYY-MM-DD or RFC3339); range is [from, to)
-         * @param {string} [scheduledTo] Filter to (YYYY-MM-DD or RFC3339), exclusive
+         * @param {string} [scheduledFrom] Filter from (YYYY-MM-DD &#x3D; start of that day in the business timezone, or RFC3339); range is [from, to)
+         * @param {string} [scheduledTo] Filter to (YYYY-MM-DD &#x3D; end of that day in the business timezone, or RFC3339), exclusive
          * @param {string} [since] RFC3339 cursor from the prior response\&#39;s next_since. OMIT on the first poll to prime the cursor at server-now.
          * @param {number} [limit] Max changes per poll (default 15, max 1000). If the page fills, has_more&#x3D;true.
          * @param {*} [options] Override http request option.
@@ -455,25 +1154,114 @@ export const JobRequestBusinessApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         * Paginated list of the business\'s bookings (work orders) with dispatch-oriented filters: workflow status, customer, assigned technician, scheduled date range and free-text search over code/description. This is also the SCHEDULE query: combine technician_id + scheduled_from/scheduled_to to read one technician\'s agenda for a day or week (e.g. \"what is Alex doing tomorrow\"), or just the date range for the whole team\'s calendar.
          * @summary List job requests
          * @param {string} [statusKeys] Comma-separated status slugs
          * @param {string} [status] active (default) | archived | all
+         * @param {string} [priority] Priority filter (p0|p1|p2|p3)
          * @param {string} [customerId] Customer UUID
          * @param {string} [technicianId] Technician UUID
-         * @param {string} [scheduledFrom] Filter from (YYYY-MM-DD or RFC3339); range is [from, to)
-         * @param {string} [scheduledTo] Filter to (YYYY-MM-DD or RFC3339), exclusive
+         * @param {string} [serviceAreaId] Service-area UUID (board zone filter)
+         * @param {string} [scheduledFrom] Filter from (YYYY-MM-DD &#x3D; start of that day in the business timezone, or RFC3339); range is [from, to)
+         * @param {string} [scheduledTo] Filter to (YYYY-MM-DD &#x3D; end of that day in the business timezone, or RFC3339), exclusive
          * @param {string} [q] Search short_code or description (case-insensitive, partial match)
-         * @param {string} [sort] Sort key
+         * @param {string} [sort] Sort key: created_at:desc (default) | created_at:asc | scheduled_at:asc | scheduled_at:desc | priority:asc (P0 first) | priority:desc
          * @param {number} [page] Page number
          * @param {number} [limit] Page size
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listJobRequests(statusKeys?: string, status?: string, customerId?: string, technicianId?: string, scheduledFrom?: string, scheduledTo?: string, q?: string, sort?: string, page?: number, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListJobRequests200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listJobRequests(statusKeys, status, customerId, technicianId, scheduledFrom, scheduledTo, q, sort, page, limit, options);
+        async listJobRequests(statusKeys?: string, status?: string, priority?: string, customerId?: string, technicianId?: string, serviceAreaId?: string, scheduledFrom?: string, scheduledTo?: string, q?: string, sort?: string, page?: number, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListJobRequests200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listJobRequests(statusKeys, status, priority, customerId, technicianId, serviceAreaId, scheduledFrom, scheduledTo, q, sort, page, limit, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.listJobRequests']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Bookable arrival-window slots for a quoted job, computed by the smart-assignment matching engine: each slot lists the technicians actually available to start then (skills, weekly availability, existing schedule, time off and travel all checked), with a per-technician match score. Use it to find and offer appointment times an agent or integration can then confirm (POST /job-requests/{id}/confirm with the slot\'s business_time.datetime). Same grid the end-customer\'s slot picker shows; slot width defaults to the business\'s arrival window — override via ?step_minutes (5–240). The job must be quoted first (the quote sets the visit duration the matcher schedules).
+         * @summary Matching time slots for a quoted job
+         * @param {string} id Job request ID (UUID or short_code)
+         * @param {number} [stepMinutes] Slot step in minutes (default: business arrival window, 5–240)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listMatchingSlots(id: string, stepMinutes?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListMatchingSlots200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listMatchingSlots(id, stepMinutes, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.listMatchingSlots']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Ranks who could serve a hypothetical visit at (lat,lng) starting `at` for `duration_minutes` — the engine applies the REAL hard filters (weekly hours, existing schedule, approved time-off, geographic service areas, optional skill floor) and returns candidates nearest-arrival first. ETA origin is each technician\'s start location (no live GPS). Use before creating a booking to propose realistic arrivals.
+         * @summary Find nearby feasible technicians (job-less location query)
+         * @param {number} lat Latitude of the service location
+         * @param {number} lng Longitude of the service location
+         * @param {string} [at] Visit start (RFC3339, e.g. 2026-07-20T14:00:00Z; default now)
+         * @param {number} [durationMinutes] Visit length in minutes (default 60; 15–480)
+         * @param {string} [skillIds] Comma-separated skill UUIDs to require/match
+         * @param {number} [limit] Max candidates (default 10, max 20)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async listNearbyTechnicians(lat: number, lng: number, at?: string, durationMinutes?: number, skillIds?: string, limit?: number, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListNearbyTechnicians200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listNearbyTechnicians(lat, lng, at, durationMinutes, skillIds, limit, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.listNearbyTechnicians']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Computes (WITHOUT writing) the cascade of inserting an emergency job onto a technician at a chosen time: where the emergency lands + every job pushed back, grouped per business-local day. `displacement_mode=reassign` instead hands each displaced job to another feasible technician at its ORIGINAL window (same-day promise) — jobs with no alternate capacity fall back to reschedule and stay in `days`. `mode=overtime` keeps everyone same-day (tech works late); `mode=next_day` rolls overflow to the next working day(s). Read-only — safe to call repeatedly; commit is a separate endpoint. Isolated feature (see EMERGENCY_RESCHEDULE_DESIGN.md). 409 NEXT STEPS: EMERGENCY_RESCHEDULE_SLOT_OCCUPIED — the landing window is blocked by a job the cascade may NOT move (another P0, a crew or multi-day job): choose another technician (walk the /candidates ranking) or another time; displacement never touches P0/crew/multi-day anchors. EMERGENCY_RESCHEDULE_NOT_ELIGIBLE / CREW_UNSUPPORTED / MULTIDAY_UNSUPPORTED / NO_WORKING_DAY / IN_PAST — same remedies as /candidates.
+         * @summary Preview emergency insert + cascade reschedule
+         * @param {JobRequestEmergencyPreviewRequest} jobRequestEmergencyPreviewRequest emergency insert spec
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async previewEmergencyReschedule(jobRequestEmergencyPreviewRequest: JobRequestEmergencyPreviewRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CommitEmergencyReschedule200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.previewEmergencyReschedule(jobRequestEmergencyPreviewRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.previewEmergencyReschedule']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Computes (WITHOUT writing) the outcome of moving a confirmed job to a new time and/or technician: where it lands, every later job pushed back per `mode`, and the warnings the coordinator would accept (displaced jobs leaving their confirmed windows, overtime). Same technician = pure time move; different technician = manual reassign. Read-only — safe to call repeatedly while dragging; commit is a separate endpoint. See SCHEDULE_BOARD_DESIGN.md. Warning detail: a TECH_NOT_FEASIBLE warning carries `reason` = `cannot_arrive_in_time` (commute from the tech day-start location / shift start; `earliest_feasible_at` (RFC3339 UTC) is the first same-day time they CAN be on site — suggest it as the drop slot) | `missing_required_skills` | `not_available_today` (no working hours, approved time off, or outside the service area) | `not_lead_tier`. For a P0 move this warning is advisory (coordinator may commit anyway); for p1/p2/p3 the same condition is the hard 409 SCHEDULE_MOVE_TECH_INFEASIBLE. 409 NEXT STEPS: SCHEDULE_MOVE_NOT_ELIGIBLE (job unconfirmed/unquoted/archived/completed — not movable) · SCHEDULE_MOVE_IN_PROGRESS (tech already executing — do not move) · SCHEDULE_MOVE_IN_PAST (pick a future time) · SCHEDULE_MOVE_OUTSIDE_WINDOW (landing time outside the customer-confirmed window — hard block; pick a time inside it) · SCHEDULE_MOVE_SLOT_OCCUPIED (landing window blocked by an immovable anchor — another tech/time) · SCHEDULE_MOVE_TECH_INFEASIBLE (non-P0 hard block: target tech not qualified/available — see the TECH_NOT_FEASIBLE warning reasons; change tech or time) · SCHEDULE_MOVE_MULTIDAY_UNSUPPORTED (multi-day jobs not movable v1) · SCHEDULE_MOVE_NO_WORKING_DAY (pick a working day) · SCHEDULE_MOVE_REQUIRES_FREE_SLOT (non-P0 moves may not displace — free capacity only, unless the owner enables allow_non_p0_displacement) · SCHEDULE_MOVE_CREW_UNSTAFFABLE (a crew slot has no feasible replacement at the new time — another time).
+         * @summary Preview a schedule-board job move
+         * @param {string} id Job request ID (UUID or short_code)
+         * @param {JobRequestMovePreviewReq} jobRequestMovePreviewReq move spec
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async previewJobRequestMove(id: string, jobRequestMovePreviewReq: JobRequestMovePreviewReq, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CommitJobRequestMove200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.previewJobRequestMove(id, jobRequestMovePreviewReq, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.previewJobRequestMove']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Sends the quote: sets quoted_at + duration cols, advances pending_action to confirm_booking. Status stays `booking`.
+         * @summary Fire quote (FIXED action — business)
+         * @param {string} id Job request ID
+         * @param {JobRequestQuoteRequest} jobRequestQuoteRequest Quote payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async quoteJobRequest(id: string, jobRequestQuoteRequest: JobRequestQuoteRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.quoteJobRequest(id, jobRequestQuoteRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.quoteJobRequest']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Sets the P0–P3 priority on a non-archived, non-completed job (Owner / Administrator / Booking Coordinator). Allowed values: \"p0\" (emergency, interrupt-driven) | \"p1\" (top — displaced only by p0; may carry an sla_deadline arming auto-escalation) | \"p2\" (standard) | \"p3\" (deferrable, first displacement victim). sla_deadline is only valid with p1 and must be in the future (business-local naive datetime); moving away from p1 disarms the SLA clock. Accepts UUID or short_code in :id.
+         * @summary Set job priority (scheduling staff)
+         * @param {string} id Job request ID or short_code
+         * @param {JobRequestUpdatePriorityRequest} jobRequestUpdatePriorityRequest Priority payload
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updateJobPriority(id: string, jobRequestUpdatePriorityRequest: JobRequestUpdatePriorityRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateJobPriority(id, jobRequestUpdatePriorityRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobRequestBusinessApi.updateJobPriority']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
     }
@@ -487,17 +1275,47 @@ export const JobRequestBusinessApiFactory = function (configuration?: Configurat
     const localVarFp = JobRequestBusinessApiFp(configuration)
     return {
         /**
-         * 
-         * @summary Create a job request (business actor)
+         * Applies the cascade previewed by /emergency/preview: assigns the emergency job to the technician and pushes the displaced jobs back (or, with `displacement_mode=reassign`, re-staffs them onto their previewed alternates first), atomically. Supports Idempotency-Key. The server recomputes the plan under a lock and fences each job on its status_version — if anything changed since the preview it returns 409 EMERGENCY_RESCHEDULE_PLAN_DRIFTED (re-preview). Same body as preview + optional `emergency_expected_version`. Isolated feature (see EMERGENCY_RESCHEDULE_DESIGN.md). 409 NEXT STEPS: EMERGENCY_RESCHEDULE_PLAN_DRIFTED — the schedule changed between your preview and this commit (another booking/move won a lane): call /preview again, show the fresh plan, then commit. EMERGENCY_RESCHEDULE_SLOT_OCCUPIED — landing window blocked by an immovable anchor (P0/crew/multi-day): another tech or time. Other codes — same remedies as /candidates.
+         * @summary Commit emergency insert + cascade reschedule
+         * @param {JobRequestBusinessApiCommitEmergencyRescheduleRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        commitEmergencyReschedule(requestParameters: JobRequestBusinessApiCommitEmergencyRescheduleRequest, options?: RawAxiosRequestConfig): AxiosPromise<CommitEmergencyReschedule200Response> {
+            return localVarFp.commitEmergencyReschedule(requestParameters.jobRequestEmergencyCommitRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Applies the move previewed by /move/preview: places the job on the technician at the new time and pushes the displaced jobs back, atomically (per-tech advisory lock; the server recomputes the plan and fences each job on its status_version — drift since the preview returns 409 SCHEDULE_MOVE_PLAN_DRIFTED, re-preview). Same body as preview + optional `expected_version`. See SCHEDULE_BOARD_DESIGN.md. 409 NEXT STEPS: SCHEDULE_MOVE_PLAN_DRIFTED — the schedule changed since your preview (or expected_move_ids no longer match): re-preview, show the fresh plan, commit again. All other codes — same remedies as /move/preview.
+         * @summary Commit a schedule-board job move
+         * @param {JobRequestBusinessApiCommitJobRequestMoveRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        commitJobRequestMove(requestParameters: JobRequestBusinessApiCommitJobRequestMoveRequest, options?: RawAxiosRequestConfig): AxiosPromise<CommitJobRequestMove200Response> {
+            return localVarFp.commitJobRequestMove(requestParameters.id, requestParameters.jobRequestMoveCommitReq, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Fires the customer-actor `confirm_booking` action from the BUSINESS surface (audited as business_on_behalf). Two uses: (1) LIVE — staff confirm a slot for a customer who booked by phone; (2) SANDBOX — the customer magic-token surface is live-only (a sandbox job\'s link can never reach a real customer), so this is the ONLY way to drive a sandbox test job past booking (book → quote → confirm → assign → complete). Body carries the customer-chosen scheduled_at (business-local naive datetime). DECISION TABLE — every 409 this endpoint returns, and the correct NEXT STEP (branch on error_code, never on the HTTP status): • JOB_REQUEST_STAGE_CONFLICT — the job changed since you read it (NOTE: every FAILED confirm attempt also bumps status_version by design). Next: re-GET the job, retry with the fresh status_version. • JOB_REQUEST_ACTION_NOT_PENDING — the job is no longer at the confirm step (usually: already confirmed). Next: re-GET and show current status; do not retry. • JOB_REQUEST_NO_TECHNICIAN_AVAILABLE — the TIME is infeasible for everyone (outside working hours / the customer window, or nobody qualifies). Next: pick another time via booking-windows / time-segments. NOT an emergency case — displacement cannot conjure capacity. • JOB_REQUEST_TECH_INFEASIBLE — the FORCED technician can never take the job then; `data.reason` says why: cannot_arrive_in_time (commute/shift-start — `data.earliest_feasible_at` (RFC3339 UTC) is the first same-day time they CAN be on site → offer it) | missing_required_skills | not_available_today | not_lead_tier. Next: keep the tech and reschedule to earliest_feasible_at+, OR keep the time and drop technician_id (auto-pick) / choose another tech from time-segments. NOT an emergency case. • JOB_REQUEST_P0_REQUIRES_DISPLACEMENT — the ONLY code that routes to the EMERGENCY flow: the job is P0, the tech qualifies, but the lane is genuinely occupied. Next: POST emergency/candidates → preview → commit (the commit auto-confirms). Caveat: if the occupying jobs are themselves P0 the preview will reject with EMERGENCY_RESCHEDULE_SLOT_OCCUPIED (P0 never displaces P0) — then pick another tech/time.
+         * @summary Confirm a booking on behalf of the customer
+         * @param {JobRequestBusinessApiConfirmJobRequestRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        confirmJobRequest(requestParameters: JobRequestBusinessApiConfirmJobRequestRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.confirmJobRequest(requestParameters.id, requestParameters.jobRequestConfirmRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Books a field-service job — the work order that enters the dispatch & scheduling pipeline. Send the customer\'s UUID plus requested `job_dates` (date + morning/afternoon/evening periods, ideally offered from GET /job-requests/booking-windows), optional `job_type_id` (service catalog), `skill_ids` (required technician qualifications) and a free-text description. Quoting, technician/crew assignment and completion then advance the work order through the business\'s workflow.
+         * @summary Create a job request
          * @param {JobRequestBusinessApiCreateJobRequestRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         createJobRequest(requestParameters: JobRequestBusinessApiCreateJobRequestRequest, options?: RawAxiosRequestConfig): AxiosPromise<CreateJobRequest200Response> {
-            return localVarFp.createJobRequest(requestParameters.jobRequestCreateRequest, requestParameters.xTimezone, options).then((request) => request(axios, basePath));
+            return localVarFp.createJobRequest(requestParameters.jobRequestCreateRequest, requestParameters.xTimezone, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         * Returns the full work order: current workflow status, quoted duration, confirmed schedule, customer contact snapshot and the assigned technician / crew — everything a dispatcher or an external field-service system needs to track one job.
          * @summary Get a job request
          * @param {JobRequestBusinessApiGetJobRequestRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -507,8 +1325,8 @@ export const JobRequestBusinessApiFactory = function (configuration?: Configurat
             return localVarFp.getJobRequest(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * Per-status events[] composed from workflow snapshot + scattered typed cols + action_audit. FE renders as the Job Timeline panel (completed step = filled check, current = outline ring, upcoming = empty). entered_at nil for upcoming steps + older jobs missing the typed-col backfill.
-         * @summary Job timeline (business surface — also serves tech via BusinessAuth)
+         * Per-status progress of a job\'s lifecycle (e.g. booked → confirmed → on the way → arrived → completed, following the business\'s configured workflow) — render it as a job-tracking timeline. Each status carries its state (completed | current | upcoming), when the job entered it, and the actions fired within it. entered_at may be null for upcoming steps and for older jobs predating the backfill.
+         * @summary Job timeline
          * @param {JobRequestBusinessApiGetJobRequestTimelineRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -517,8 +1335,38 @@ export const JobRequestBusinessApiFactory = function (configuration?: Configurat
             return localVarFp.getJobRequestTimeline(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
-         * @summary Booking availability (business actor)
+         * The technician\'s ACTUAL occupancy over a date range: every job session on their lane (solo/lead and crew) plus approved time-off blocks. Weekly recurring working hours come from the technician-availability endpoints — combine both for the full availability picture (\"get crew availability\"). from/to are business-local dates (YYYY-MM-DD, inclusive); omitted = today .. +7 days; range max 31 days.
+         * @summary One technician\'s real schedule (sessions + time off)
+         * @param {JobRequestBusinessApiGetTechnicianScheduleRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTechnicianSchedule(requestParameters: JobRequestBusinessApiGetTechnicianScheduleRequest, options?: RawAxiosRequestConfig): AxiosPromise<GetTechnicianSchedule200Response> {
+            return localVarFp.getTechnicianSchedule(requestParameters.id, requestParameters.from, requestParameters.to, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Technicians who can actually take this job, matched and ranked by the smart-assignment engine — skills per crew slot, weekly availability, existing schedule, time off and travel are all checked; each candidate carries a score breakdown (distance, travel, matched skills) plus the exact on-site session plan they would work. NOT a raw roster list (use GET /technicians for that). Returns the ranked feasible LEAD pool by default; pass include_buddies=true to also return per-slot buddy pools, include_vehicle=true to include the available-vehicle list. force_lead_id checks one specific technician: returns only that lead (with their crew combo) if feasible, else 409 JOB_REQUEST_NO_TECHNICIAN_AVAILABLE.
+         * @summary Matching crew candidates for a job
+         * @param {JobRequestBusinessApiListCrewCandidatesRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listCrewCandidates(requestParameters: JobRequestBusinessApiListCrewCandidatesRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListCrewCandidates200Response> {
+            return localVarFp.listCrewCandidates(requestParameters.id, requestParameters.includeBuddies, requestParameters.includeVehicle, requestParameters.forceLeadId, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Returns the technicians who could take the emergency job at the requested start, ranked FASTEST-ARRIVAL first (arrival beats route efficiency for a P0). The response also carries a historical `crew_recommendation` (median crew size on comparable completed jobs + mandatory disclaimer — AC-2). Booked technicians are still candidates — each entry carries the displacement preview (which lower-priority jobs would be pushed, per day) that committing to them would cause; total_moves=0 means a free slot. P0 jobs are never displaced; P1 only by a P0. ETA is estimated from the technician\'s start location (no live GPS). Feed the chosen technician_id into emergency/preview + emergency/commit. 409 NEXT STEPS: EMERGENCY_RESCHEDULE_NOT_ELIGIBLE — the job cannot be emergency-inserted (not P0, already started/completed/archived, or not quoted): fix the job state or use a normal confirm. EMERGENCY_RESCHEDULE_CREW_UNSUPPORTED — crew jobs cannot use the emergency flow (v1): staff via confirm/reassign instead. EMERGENCY_RESCHEDULE_MULTIDAY_UNSUPPORTED — a confirmed multi-day job cannot be re-inserted (v1): use the normal reassign flow. EMERGENCY_RESCHEDULE_NO_WORKING_DAY — the chosen date has no working hours: pick a working day. EMERGENCY_RESCHEDULE_IN_PAST — start time already passed: pick a future time.
+         * @summary Rank technicians for a P0 emergency insert
+         * @param {JobRequestBusinessApiListEmergencyCandidatesRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listEmergencyCandidates(requestParameters: JobRequestBusinessApiListEmergencyCandidatesRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListEmergencyCandidates200Response> {
+            return localVarFp.listEmergencyCandidates(requestParameters.jobRequestEmergencyCandidatesRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Real-time appointment availability from the scheduling engine: returns the bookable date + time-period windows given technician capacity, working hours and service-territory coverage. Call this before creating a job request and offer the customer ONLY the returned windows — it prevents unschedulable bookings.
+         * @summary Booking availability
          * @param {JobRequestBusinessApiListJobRequestBookingWindowsRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -527,7 +1375,7 @@ export const JobRequestBusinessApiFactory = function (configuration?: Configurat
             return localVarFp.listJobRequestBookingWindows(requestParameters.xTimezone, requestParameters.from, requestParameters.to, options).then((request) => request(axios, basePath));
         },
         /**
-         * Keep your own copy of bookings in sync WITHOUT re-listing everything: returns the job requests whose state changed (created, status transition, reschedule, soft-delete/archive) at or after the `since` cursor, ordered oldest-change-first (updated_at ASC).  How to use it: (1) On your first poll OMIT `since` — the server primes the cursor at \"now\", returns no items and a `next_since`. (2) Store `next_since` and pass it as `since` on the next poll. (3) Apply each returned item to your store by UPSERTING on `id` (the server re-scans a ~5s safety window, so the same job may appear again — never blindly append). (4) If `has_more` is true the page filled to `limit` and more changes are already waiting — poll again immediately; otherwise wait your normal interval (e.g. 5–15s).  This is NOT pagination — it is a time-keyed change feed. Use the paginated GET /job-requests for the initial bulk load, then this endpoint to stay live. Filters (status_keys, customer_id, …) narrow the feed to the slice you care about.
+         * Keep an external system (your CRM, ERP or field-service tool) in sync with bookings WITHOUT re-listing everything: returns the job requests (work orders) whose state changed (created, status transition, reschedule, soft-delete/archive) at or after the `since` cursor, ordered oldest-change-first (updated_at ASC).  How to use it: (1) On your first poll OMIT `since` — the server primes the cursor at \"now\", returns no items and a `next_since`. (2) Store `next_since` and pass it as `since` on the next poll. (3) Apply each returned item to your store by UPSERTING on `id` (the server re-scans a ~5s safety window, so the same job may appear again — never blindly append). (4) If `has_more` is true the page filled to `limit` and more changes are already waiting — poll again immediately; otherwise wait your normal interval (e.g. 5–15s).  This is NOT pagination — it is a time-keyed change feed. Use the paginated GET /job-requests for the initial bulk load, then this endpoint to stay live. Filters (status_keys, customer_id, …) narrow the feed to the slice you care about.
          * @summary Poll for new & changed job requests (sync feed)
          * @param {JobRequestBusinessApiListJobRequestChangesRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -537,17 +1385,154 @@ export const JobRequestBusinessApiFactory = function (configuration?: Configurat
             return localVarFp.listJobRequestChanges(requestParameters.statusKeys, requestParameters.priority, requestParameters.customerId, requestParameters.technicianId, requestParameters.scheduledFrom, requestParameters.scheduledTo, requestParameters.since, requestParameters.limit, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         * Paginated list of the business\'s bookings (work orders) with dispatch-oriented filters: workflow status, customer, assigned technician, scheduled date range and free-text search over code/description. This is also the SCHEDULE query: combine technician_id + scheduled_from/scheduled_to to read one technician\'s agenda for a day or week (e.g. \"what is Alex doing tomorrow\"), or just the date range for the whole team\'s calendar.
          * @summary List job requests
          * @param {JobRequestBusinessApiListJobRequestsRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
         listJobRequests(requestParameters: JobRequestBusinessApiListJobRequestsRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ListJobRequests200Response> {
-            return localVarFp.listJobRequests(requestParameters.statusKeys, requestParameters.status, requestParameters.customerId, requestParameters.technicianId, requestParameters.scheduledFrom, requestParameters.scheduledTo, requestParameters.q, requestParameters.sort, requestParameters.page, requestParameters.limit, options).then((request) => request(axios, basePath));
+            return localVarFp.listJobRequests(requestParameters.statusKeys, requestParameters.status, requestParameters.priority, requestParameters.customerId, requestParameters.technicianId, requestParameters.serviceAreaId, requestParameters.scheduledFrom, requestParameters.scheduledTo, requestParameters.q, requestParameters.sort, requestParameters.page, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Bookable arrival-window slots for a quoted job, computed by the smart-assignment matching engine: each slot lists the technicians actually available to start then (skills, weekly availability, existing schedule, time off and travel all checked), with a per-technician match score. Use it to find and offer appointment times an agent or integration can then confirm (POST /job-requests/{id}/confirm with the slot\'s business_time.datetime). Same grid the end-customer\'s slot picker shows; slot width defaults to the business\'s arrival window — override via ?step_minutes (5–240). The job must be quoted first (the quote sets the visit duration the matcher schedules).
+         * @summary Matching time slots for a quoted job
+         * @param {JobRequestBusinessApiListMatchingSlotsRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listMatchingSlots(requestParameters: JobRequestBusinessApiListMatchingSlotsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListMatchingSlots200Response> {
+            return localVarFp.listMatchingSlots(requestParameters.id, requestParameters.stepMinutes, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Ranks who could serve a hypothetical visit at (lat,lng) starting `at` for `duration_minutes` — the engine applies the REAL hard filters (weekly hours, existing schedule, approved time-off, geographic service areas, optional skill floor) and returns candidates nearest-arrival first. ETA origin is each technician\'s start location (no live GPS). Use before creating a booking to propose realistic arrivals.
+         * @summary Find nearby feasible technicians (job-less location query)
+         * @param {JobRequestBusinessApiListNearbyTechniciansRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        listNearbyTechnicians(requestParameters: JobRequestBusinessApiListNearbyTechniciansRequest, options?: RawAxiosRequestConfig): AxiosPromise<ListNearbyTechnicians200Response> {
+            return localVarFp.listNearbyTechnicians(requestParameters.lat, requestParameters.lng, requestParameters.at, requestParameters.durationMinutes, requestParameters.skillIds, requestParameters.limit, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Computes (WITHOUT writing) the cascade of inserting an emergency job onto a technician at a chosen time: where the emergency lands + every job pushed back, grouped per business-local day. `displacement_mode=reassign` instead hands each displaced job to another feasible technician at its ORIGINAL window (same-day promise) — jobs with no alternate capacity fall back to reschedule and stay in `days`. `mode=overtime` keeps everyone same-day (tech works late); `mode=next_day` rolls overflow to the next working day(s). Read-only — safe to call repeatedly; commit is a separate endpoint. Isolated feature (see EMERGENCY_RESCHEDULE_DESIGN.md). 409 NEXT STEPS: EMERGENCY_RESCHEDULE_SLOT_OCCUPIED — the landing window is blocked by a job the cascade may NOT move (another P0, a crew or multi-day job): choose another technician (walk the /candidates ranking) or another time; displacement never touches P0/crew/multi-day anchors. EMERGENCY_RESCHEDULE_NOT_ELIGIBLE / CREW_UNSUPPORTED / MULTIDAY_UNSUPPORTED / NO_WORKING_DAY / IN_PAST — same remedies as /candidates.
+         * @summary Preview emergency insert + cascade reschedule
+         * @param {JobRequestBusinessApiPreviewEmergencyRescheduleRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        previewEmergencyReschedule(requestParameters: JobRequestBusinessApiPreviewEmergencyRescheduleRequest, options?: RawAxiosRequestConfig): AxiosPromise<CommitEmergencyReschedule200Response> {
+            return localVarFp.previewEmergencyReschedule(requestParameters.jobRequestEmergencyPreviewRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Computes (WITHOUT writing) the outcome of moving a confirmed job to a new time and/or technician: where it lands, every later job pushed back per `mode`, and the warnings the coordinator would accept (displaced jobs leaving their confirmed windows, overtime). Same technician = pure time move; different technician = manual reassign. Read-only — safe to call repeatedly while dragging; commit is a separate endpoint. See SCHEDULE_BOARD_DESIGN.md. Warning detail: a TECH_NOT_FEASIBLE warning carries `reason` = `cannot_arrive_in_time` (commute from the tech day-start location / shift start; `earliest_feasible_at` (RFC3339 UTC) is the first same-day time they CAN be on site — suggest it as the drop slot) | `missing_required_skills` | `not_available_today` (no working hours, approved time off, or outside the service area) | `not_lead_tier`. For a P0 move this warning is advisory (coordinator may commit anyway); for p1/p2/p3 the same condition is the hard 409 SCHEDULE_MOVE_TECH_INFEASIBLE. 409 NEXT STEPS: SCHEDULE_MOVE_NOT_ELIGIBLE (job unconfirmed/unquoted/archived/completed — not movable) · SCHEDULE_MOVE_IN_PROGRESS (tech already executing — do not move) · SCHEDULE_MOVE_IN_PAST (pick a future time) · SCHEDULE_MOVE_OUTSIDE_WINDOW (landing time outside the customer-confirmed window — hard block; pick a time inside it) · SCHEDULE_MOVE_SLOT_OCCUPIED (landing window blocked by an immovable anchor — another tech/time) · SCHEDULE_MOVE_TECH_INFEASIBLE (non-P0 hard block: target tech not qualified/available — see the TECH_NOT_FEASIBLE warning reasons; change tech or time) · SCHEDULE_MOVE_MULTIDAY_UNSUPPORTED (multi-day jobs not movable v1) · SCHEDULE_MOVE_NO_WORKING_DAY (pick a working day) · SCHEDULE_MOVE_REQUIRES_FREE_SLOT (non-P0 moves may not displace — free capacity only, unless the owner enables allow_non_p0_displacement) · SCHEDULE_MOVE_CREW_UNSTAFFABLE (a crew slot has no feasible replacement at the new time — another time).
+         * @summary Preview a schedule-board job move
+         * @param {JobRequestBusinessApiPreviewJobRequestMoveRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        previewJobRequestMove(requestParameters: JobRequestBusinessApiPreviewJobRequestMoveRequest, options?: RawAxiosRequestConfig): AxiosPromise<CommitJobRequestMove200Response> {
+            return localVarFp.previewJobRequestMove(requestParameters.id, requestParameters.jobRequestMovePreviewReq, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Sends the quote: sets quoted_at + duration cols, advances pending_action to confirm_booking. Status stays `booking`.
+         * @summary Fire quote (FIXED action — business)
+         * @param {JobRequestBusinessApiQuoteJobRequestRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        quoteJobRequest(requestParameters: JobRequestBusinessApiQuoteJobRequestRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.quoteJobRequest(requestParameters.id, requestParameters.jobRequestQuoteRequest, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Sets the P0–P3 priority on a non-archived, non-completed job (Owner / Administrator / Booking Coordinator). Allowed values: \"p0\" (emergency, interrupt-driven) | \"p1\" (top — displaced only by p0; may carry an sla_deadline arming auto-escalation) | \"p2\" (standard) | \"p3\" (deferrable, first displacement victim). sla_deadline is only valid with p1 and must be in the future (business-local naive datetime); moving away from p1 disarms the SLA clock. Accepts UUID or short_code in :id.
+         * @summary Set job priority (scheduling staff)
+         * @param {JobRequestBusinessApiUpdateJobPriorityRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateJobPriority(requestParameters: JobRequestBusinessApiUpdateJobPriorityRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.updateJobPriority(requestParameters.id, requestParameters.jobRequestUpdatePriorityRequest, options).then((request) => request(axios, basePath));
         },
     };
 };
+
+/**
+ * Request parameters for commitEmergencyReschedule operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiCommitEmergencyRescheduleRequest
+ */
+export interface JobRequestBusinessApiCommitEmergencyRescheduleRequest {
+    /**
+     * emergency insert spec
+     * @type {JobRequestEmergencyCommitRequest}
+     * @memberof JobRequestBusinessApiCommitEmergencyReschedule
+     */
+    readonly jobRequestEmergencyCommitRequest: JobRequestEmergencyCommitRequest
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+     * @type {string}
+     * @memberof JobRequestBusinessApiCommitEmergencyReschedule
+     */
+    readonly idempotencyKey?: string
+}
+
+/**
+ * Request parameters for commitJobRequestMove operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiCommitJobRequestMoveRequest
+ */
+export interface JobRequestBusinessApiCommitJobRequestMoveRequest {
+    /**
+     * Job request ID (UUID or short_code)
+     * @type {string}
+     * @memberof JobRequestBusinessApiCommitJobRequestMove
+     */
+    readonly id: string
+
+    /**
+     * move spec
+     * @type {JobRequestMoveCommitReq}
+     * @memberof JobRequestBusinessApiCommitJobRequestMove
+     */
+    readonly jobRequestMoveCommitReq: JobRequestMoveCommitReq
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+     * @type {string}
+     * @memberof JobRequestBusinessApiCommitJobRequestMove
+     */
+    readonly idempotencyKey?: string
+}
+
+/**
+ * Request parameters for confirmJobRequest operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiConfirmJobRequestRequest
+ */
+export interface JobRequestBusinessApiConfirmJobRequestRequest {
+    /**
+     * Job request ID
+     * @type {string}
+     * @memberof JobRequestBusinessApiConfirmJobRequest
+     */
+    readonly id: string
+
+    /**
+     * Chosen slot (scheduled_at) + optional technician_id force-assign (P0–P3 flow: pins the ranked candidate, feasibility still enforced)
+     * @type {JobRequestConfirmRequest}
+     * @memberof JobRequestBusinessApiConfirmJobRequest
+     */
+    readonly jobRequestConfirmRequest: JobRequestConfirmRequest
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+     * @type {string}
+     * @memberof JobRequestBusinessApiConfirmJobRequest
+     */
+    readonly idempotencyKey?: string
+}
 
 /**
  * Request parameters for createJobRequest operation in JobRequestBusinessApi.
@@ -568,6 +1553,13 @@ export interface JobRequestBusinessApiCreateJobRequestRequest {
      * @memberof JobRequestBusinessApiCreateJobRequest
      */
     readonly xTimezone?: string
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key returns the original booking instead of creating a duplicate
+     * @type {string}
+     * @memberof JobRequestBusinessApiCreateJobRequest
+     */
+    readonly idempotencyKey?: string
 }
 
 /**
@@ -596,6 +1588,83 @@ export interface JobRequestBusinessApiGetJobRequestTimelineRequest {
      * @memberof JobRequestBusinessApiGetJobRequestTimeline
      */
     readonly id: string
+}
+
+/**
+ * Request parameters for getTechnicianSchedule operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiGetTechnicianScheduleRequest
+ */
+export interface JobRequestBusinessApiGetTechnicianScheduleRequest {
+    /**
+     * Technician ID
+     * @type {string}
+     * @memberof JobRequestBusinessApiGetTechnicianSchedule
+     */
+    readonly id: string
+
+    /**
+     * Start date (YYYY-MM-DD, business-local; default today)
+     * @type {string}
+     * @memberof JobRequestBusinessApiGetTechnicianSchedule
+     */
+    readonly from?: string
+
+    /**
+     * End date (YYYY-MM-DD, inclusive; default from+7d; max range 31 days)
+     * @type {string}
+     * @memberof JobRequestBusinessApiGetTechnicianSchedule
+     */
+    readonly to?: string
+}
+
+/**
+ * Request parameters for listCrewCandidates operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiListCrewCandidatesRequest
+ */
+export interface JobRequestBusinessApiListCrewCandidatesRequest {
+    /**
+     * Job request ID or short_code
+     * @type {string}
+     * @memberof JobRequestBusinessApiListCrewCandidates
+     */
+    readonly id: string
+
+    /**
+     * Also return buddy candidate pools
+     * @type {boolean}
+     * @memberof JobRequestBusinessApiListCrewCandidates
+     */
+    readonly includeBuddies?: boolean
+
+    /**
+     * Also return the available-vehicle list
+     * @type {boolean}
+     * @memberof JobRequestBusinessApiListCrewCandidates
+     */
+    readonly includeVehicle?: boolean
+
+    /**
+     * Check a specific technician as lead — returns only that lead if feasible, else 409
+     * @type {string}
+     * @memberof JobRequestBusinessApiListCrewCandidates
+     */
+    readonly forceLeadId?: string
+}
+
+/**
+ * Request parameters for listEmergencyCandidates operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiListEmergencyCandidatesRequest
+ */
+export interface JobRequestBusinessApiListEmergencyCandidatesRequest {
+    /**
+     * Emergency job + desired start
+     * @type {JobRequestEmergencyCandidatesRequest}
+     * @memberof JobRequestBusinessApiListEmergencyCandidates
+     */
+    readonly jobRequestEmergencyCandidatesRequest: JobRequestEmergencyCandidatesRequest
 }
 
 /**
@@ -640,7 +1709,7 @@ export interface JobRequestBusinessApiListJobRequestChangesRequest {
     readonly statusKeys?: string
 
     /**
-     * Priority filter (normal|emergency)
+     * Priority filter (p0|p1|p2|p3)
      * @type {string}
      * @memberof JobRequestBusinessApiListJobRequestChanges
      */
@@ -661,14 +1730,14 @@ export interface JobRequestBusinessApiListJobRequestChangesRequest {
     readonly technicianId?: string
 
     /**
-     * Filter from (YYYY-MM-DD or RFC3339); range is [from, to)
+     * Filter from (YYYY-MM-DD &#x3D; start of that day in the business timezone, or RFC3339); range is [from, to)
      * @type {string}
      * @memberof JobRequestBusinessApiListJobRequestChanges
      */
     readonly scheduledFrom?: string
 
     /**
-     * Filter to (YYYY-MM-DD or RFC3339), exclusive
+     * Filter to (YYYY-MM-DD &#x3D; end of that day in the business timezone, or RFC3339), exclusive
      * @type {string}
      * @memberof JobRequestBusinessApiListJobRequestChanges
      */
@@ -710,6 +1779,13 @@ export interface JobRequestBusinessApiListJobRequestsRequest {
     readonly status?: string
 
     /**
+     * Priority filter (p0|p1|p2|p3)
+     * @type {string}
+     * @memberof JobRequestBusinessApiListJobRequests
+     */
+    readonly priority?: string
+
+    /**
      * Customer UUID
      * @type {string}
      * @memberof JobRequestBusinessApiListJobRequests
@@ -724,14 +1800,21 @@ export interface JobRequestBusinessApiListJobRequestsRequest {
     readonly technicianId?: string
 
     /**
-     * Filter from (YYYY-MM-DD or RFC3339); range is [from, to)
+     * Service-area UUID (board zone filter)
+     * @type {string}
+     * @memberof JobRequestBusinessApiListJobRequests
+     */
+    readonly serviceAreaId?: string
+
+    /**
+     * Filter from (YYYY-MM-DD &#x3D; start of that day in the business timezone, or RFC3339); range is [from, to)
      * @type {string}
      * @memberof JobRequestBusinessApiListJobRequests
      */
     readonly scheduledFrom?: string
 
     /**
-     * Filter to (YYYY-MM-DD or RFC3339), exclusive
+     * Filter to (YYYY-MM-DD &#x3D; end of that day in the business timezone, or RFC3339), exclusive
      * @type {string}
      * @memberof JobRequestBusinessApiListJobRequests
      */
@@ -745,7 +1828,7 @@ export interface JobRequestBusinessApiListJobRequestsRequest {
     readonly q?: string
 
     /**
-     * Sort key
+     * Sort key: created_at:desc (default) | created_at:asc | scheduled_at:asc | scheduled_at:desc | priority:asc (P0 first) | priority:desc
      * @type {string}
      * @memberof JobRequestBusinessApiListJobRequests
      */
@@ -767,6 +1850,153 @@ export interface JobRequestBusinessApiListJobRequestsRequest {
 }
 
 /**
+ * Request parameters for listMatchingSlots operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiListMatchingSlotsRequest
+ */
+export interface JobRequestBusinessApiListMatchingSlotsRequest {
+    /**
+     * Job request ID (UUID or short_code)
+     * @type {string}
+     * @memberof JobRequestBusinessApiListMatchingSlots
+     */
+    readonly id: string
+
+    /**
+     * Slot step in minutes (default: business arrival window, 5–240)
+     * @type {number}
+     * @memberof JobRequestBusinessApiListMatchingSlots
+     */
+    readonly stepMinutes?: number
+}
+
+/**
+ * Request parameters for listNearbyTechnicians operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiListNearbyTechniciansRequest
+ */
+export interface JobRequestBusinessApiListNearbyTechniciansRequest {
+    /**
+     * Latitude of the service location
+     * @type {number}
+     * @memberof JobRequestBusinessApiListNearbyTechnicians
+     */
+    readonly lat: number
+
+    /**
+     * Longitude of the service location
+     * @type {number}
+     * @memberof JobRequestBusinessApiListNearbyTechnicians
+     */
+    readonly lng: number
+
+    /**
+     * Visit start (RFC3339, e.g. 2026-07-20T14:00:00Z; default now)
+     * @type {string}
+     * @memberof JobRequestBusinessApiListNearbyTechnicians
+     */
+    readonly at?: string
+
+    /**
+     * Visit length in minutes (default 60; 15–480)
+     * @type {number}
+     * @memberof JobRequestBusinessApiListNearbyTechnicians
+     */
+    readonly durationMinutes?: number
+
+    /**
+     * Comma-separated skill UUIDs to require/match
+     * @type {string}
+     * @memberof JobRequestBusinessApiListNearbyTechnicians
+     */
+    readonly skillIds?: string
+
+    /**
+     * Max candidates (default 10, max 20)
+     * @type {number}
+     * @memberof JobRequestBusinessApiListNearbyTechnicians
+     */
+    readonly limit?: number
+}
+
+/**
+ * Request parameters for previewEmergencyReschedule operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiPreviewEmergencyRescheduleRequest
+ */
+export interface JobRequestBusinessApiPreviewEmergencyRescheduleRequest {
+    /**
+     * emergency insert spec
+     * @type {JobRequestEmergencyPreviewRequest}
+     * @memberof JobRequestBusinessApiPreviewEmergencyReschedule
+     */
+    readonly jobRequestEmergencyPreviewRequest: JobRequestEmergencyPreviewRequest
+}
+
+/**
+ * Request parameters for previewJobRequestMove operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiPreviewJobRequestMoveRequest
+ */
+export interface JobRequestBusinessApiPreviewJobRequestMoveRequest {
+    /**
+     * Job request ID (UUID or short_code)
+     * @type {string}
+     * @memberof JobRequestBusinessApiPreviewJobRequestMove
+     */
+    readonly id: string
+
+    /**
+     * move spec
+     * @type {JobRequestMovePreviewReq}
+     * @memberof JobRequestBusinessApiPreviewJobRequestMove
+     */
+    readonly jobRequestMovePreviewReq: JobRequestMovePreviewReq
+}
+
+/**
+ * Request parameters for quoteJobRequest operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiQuoteJobRequestRequest
+ */
+export interface JobRequestBusinessApiQuoteJobRequestRequest {
+    /**
+     * Job request ID
+     * @type {string}
+     * @memberof JobRequestBusinessApiQuoteJobRequest
+     */
+    readonly id: string
+
+    /**
+     * Quote payload
+     * @type {JobRequestQuoteRequest}
+     * @memberof JobRequestBusinessApiQuoteJobRequest
+     */
+    readonly jobRequestQuoteRequest: JobRequestQuoteRequest
+}
+
+/**
+ * Request parameters for updateJobPriority operation in JobRequestBusinessApi.
+ * @export
+ * @interface JobRequestBusinessApiUpdateJobPriorityRequest
+ */
+export interface JobRequestBusinessApiUpdateJobPriorityRequest {
+    /**
+     * Job request ID or short_code
+     * @type {string}
+     * @memberof JobRequestBusinessApiUpdateJobPriority
+     */
+    readonly id: string
+
+    /**
+     * Priority payload
+     * @type {JobRequestUpdatePriorityRequest}
+     * @memberof JobRequestBusinessApiUpdateJobPriority
+     */
+    readonly jobRequestUpdatePriorityRequest: JobRequestUpdatePriorityRequest
+}
+
+/**
  * JobRequestBusinessApi - object-oriented interface
  * @export
  * @class JobRequestBusinessApi
@@ -774,19 +2004,55 @@ export interface JobRequestBusinessApiListJobRequestsRequest {
  */
 export class JobRequestBusinessApi extends BaseAPI {
     /**
-     * 
-     * @summary Create a job request (business actor)
+     * Applies the cascade previewed by /emergency/preview: assigns the emergency job to the technician and pushes the displaced jobs back (or, with `displacement_mode=reassign`, re-staffs them onto their previewed alternates first), atomically. Supports Idempotency-Key. The server recomputes the plan under a lock and fences each job on its status_version — if anything changed since the preview it returns 409 EMERGENCY_RESCHEDULE_PLAN_DRIFTED (re-preview). Same body as preview + optional `emergency_expected_version`. Isolated feature (see EMERGENCY_RESCHEDULE_DESIGN.md). 409 NEXT STEPS: EMERGENCY_RESCHEDULE_PLAN_DRIFTED — the schedule changed between your preview and this commit (another booking/move won a lane): call /preview again, show the fresh plan, then commit. EMERGENCY_RESCHEDULE_SLOT_OCCUPIED — landing window blocked by an immovable anchor (P0/crew/multi-day): another tech or time. Other codes — same remedies as /candidates.
+     * @summary Commit emergency insert + cascade reschedule
+     * @param {JobRequestBusinessApiCommitEmergencyRescheduleRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public commitEmergencyReschedule(requestParameters: JobRequestBusinessApiCommitEmergencyRescheduleRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).commitEmergencyReschedule(requestParameters.jobRequestEmergencyCommitRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Applies the move previewed by /move/preview: places the job on the technician at the new time and pushes the displaced jobs back, atomically (per-tech advisory lock; the server recomputes the plan and fences each job on its status_version — drift since the preview returns 409 SCHEDULE_MOVE_PLAN_DRIFTED, re-preview). Same body as preview + optional `expected_version`. See SCHEDULE_BOARD_DESIGN.md. 409 NEXT STEPS: SCHEDULE_MOVE_PLAN_DRIFTED — the schedule changed since your preview (or expected_move_ids no longer match): re-preview, show the fresh plan, commit again. All other codes — same remedies as /move/preview.
+     * @summary Commit a schedule-board job move
+     * @param {JobRequestBusinessApiCommitJobRequestMoveRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public commitJobRequestMove(requestParameters: JobRequestBusinessApiCommitJobRequestMoveRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).commitJobRequestMove(requestParameters.id, requestParameters.jobRequestMoveCommitReq, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Fires the customer-actor `confirm_booking` action from the BUSINESS surface (audited as business_on_behalf). Two uses: (1) LIVE — staff confirm a slot for a customer who booked by phone; (2) SANDBOX — the customer magic-token surface is live-only (a sandbox job\'s link can never reach a real customer), so this is the ONLY way to drive a sandbox test job past booking (book → quote → confirm → assign → complete). Body carries the customer-chosen scheduled_at (business-local naive datetime). DECISION TABLE — every 409 this endpoint returns, and the correct NEXT STEP (branch on error_code, never on the HTTP status): • JOB_REQUEST_STAGE_CONFLICT — the job changed since you read it (NOTE: every FAILED confirm attempt also bumps status_version by design). Next: re-GET the job, retry with the fresh status_version. • JOB_REQUEST_ACTION_NOT_PENDING — the job is no longer at the confirm step (usually: already confirmed). Next: re-GET and show current status; do not retry. • JOB_REQUEST_NO_TECHNICIAN_AVAILABLE — the TIME is infeasible for everyone (outside working hours / the customer window, or nobody qualifies). Next: pick another time via booking-windows / time-segments. NOT an emergency case — displacement cannot conjure capacity. • JOB_REQUEST_TECH_INFEASIBLE — the FORCED technician can never take the job then; `data.reason` says why: cannot_arrive_in_time (commute/shift-start — `data.earliest_feasible_at` (RFC3339 UTC) is the first same-day time they CAN be on site → offer it) | missing_required_skills | not_available_today | not_lead_tier. Next: keep the tech and reschedule to earliest_feasible_at+, OR keep the time and drop technician_id (auto-pick) / choose another tech from time-segments. NOT an emergency case. • JOB_REQUEST_P0_REQUIRES_DISPLACEMENT — the ONLY code that routes to the EMERGENCY flow: the job is P0, the tech qualifies, but the lane is genuinely occupied. Next: POST emergency/candidates → preview → commit (the commit auto-confirms). Caveat: if the occupying jobs are themselves P0 the preview will reject with EMERGENCY_RESCHEDULE_SLOT_OCCUPIED (P0 never displaces P0) — then pick another tech/time.
+     * @summary Confirm a booking on behalf of the customer
+     * @param {JobRequestBusinessApiConfirmJobRequestRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public confirmJobRequest(requestParameters: JobRequestBusinessApiConfirmJobRequestRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).confirmJobRequest(requestParameters.id, requestParameters.jobRequestConfirmRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Books a field-service job — the work order that enters the dispatch & scheduling pipeline. Send the customer\'s UUID plus requested `job_dates` (date + morning/afternoon/evening periods, ideally offered from GET /job-requests/booking-windows), optional `job_type_id` (service catalog), `skill_ids` (required technician qualifications) and a free-text description. Quoting, technician/crew assignment and completion then advance the work order through the business\'s workflow.
+     * @summary Create a job request
      * @param {JobRequestBusinessApiCreateJobRequestRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof JobRequestBusinessApi
      */
     public createJobRequest(requestParameters: JobRequestBusinessApiCreateJobRequestRequest, options?: RawAxiosRequestConfig) {
-        return JobRequestBusinessApiFp(this.configuration).createJobRequest(requestParameters.jobRequestCreateRequest, requestParameters.xTimezone, options).then((request) => request(this.axios, this.basePath));
+        return JobRequestBusinessApiFp(this.configuration).createJobRequest(requestParameters.jobRequestCreateRequest, requestParameters.xTimezone, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
-     * 
+     * Returns the full work order: current workflow status, quoted duration, confirmed schedule, customer contact snapshot and the assigned technician / crew — everything a dispatcher or an external field-service system needs to track one job.
      * @summary Get a job request
      * @param {JobRequestBusinessApiGetJobRequestRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -798,8 +2064,8 @@ export class JobRequestBusinessApi extends BaseAPI {
     }
 
     /**
-     * Per-status events[] composed from workflow snapshot + scattered typed cols + action_audit. FE renders as the Job Timeline panel (completed step = filled check, current = outline ring, upcoming = empty). entered_at nil for upcoming steps + older jobs missing the typed-col backfill.
-     * @summary Job timeline (business surface — also serves tech via BusinessAuth)
+     * Per-status progress of a job\'s lifecycle (e.g. booked → confirmed → on the way → arrived → completed, following the business\'s configured workflow) — render it as a job-tracking timeline. Each status carries its state (completed | current | upcoming), when the job entered it, and the actions fired within it. entered_at may be null for upcoming steps and for older jobs predating the backfill.
+     * @summary Job timeline
      * @param {JobRequestBusinessApiGetJobRequestTimelineRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -810,8 +2076,44 @@ export class JobRequestBusinessApi extends BaseAPI {
     }
 
     /**
-     * 
-     * @summary Booking availability (business actor)
+     * The technician\'s ACTUAL occupancy over a date range: every job session on their lane (solo/lead and crew) plus approved time-off blocks. Weekly recurring working hours come from the technician-availability endpoints — combine both for the full availability picture (\"get crew availability\"). from/to are business-local dates (YYYY-MM-DD, inclusive); omitted = today .. +7 days; range max 31 days.
+     * @summary One technician\'s real schedule (sessions + time off)
+     * @param {JobRequestBusinessApiGetTechnicianScheduleRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public getTechnicianSchedule(requestParameters: JobRequestBusinessApiGetTechnicianScheduleRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).getTechnicianSchedule(requestParameters.id, requestParameters.from, requestParameters.to, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Technicians who can actually take this job, matched and ranked by the smart-assignment engine — skills per crew slot, weekly availability, existing schedule, time off and travel are all checked; each candidate carries a score breakdown (distance, travel, matched skills) plus the exact on-site session plan they would work. NOT a raw roster list (use GET /technicians for that). Returns the ranked feasible LEAD pool by default; pass include_buddies=true to also return per-slot buddy pools, include_vehicle=true to include the available-vehicle list. force_lead_id checks one specific technician: returns only that lead (with their crew combo) if feasible, else 409 JOB_REQUEST_NO_TECHNICIAN_AVAILABLE.
+     * @summary Matching crew candidates for a job
+     * @param {JobRequestBusinessApiListCrewCandidatesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public listCrewCandidates(requestParameters: JobRequestBusinessApiListCrewCandidatesRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).listCrewCandidates(requestParameters.id, requestParameters.includeBuddies, requestParameters.includeVehicle, requestParameters.forceLeadId, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Returns the technicians who could take the emergency job at the requested start, ranked FASTEST-ARRIVAL first (arrival beats route efficiency for a P0). The response also carries a historical `crew_recommendation` (median crew size on comparable completed jobs + mandatory disclaimer — AC-2). Booked technicians are still candidates — each entry carries the displacement preview (which lower-priority jobs would be pushed, per day) that committing to them would cause; total_moves=0 means a free slot. P0 jobs are never displaced; P1 only by a P0. ETA is estimated from the technician\'s start location (no live GPS). Feed the chosen technician_id into emergency/preview + emergency/commit. 409 NEXT STEPS: EMERGENCY_RESCHEDULE_NOT_ELIGIBLE — the job cannot be emergency-inserted (not P0, already started/completed/archived, or not quoted): fix the job state or use a normal confirm. EMERGENCY_RESCHEDULE_CREW_UNSUPPORTED — crew jobs cannot use the emergency flow (v1): staff via confirm/reassign instead. EMERGENCY_RESCHEDULE_MULTIDAY_UNSUPPORTED — a confirmed multi-day job cannot be re-inserted (v1): use the normal reassign flow. EMERGENCY_RESCHEDULE_NO_WORKING_DAY — the chosen date has no working hours: pick a working day. EMERGENCY_RESCHEDULE_IN_PAST — start time already passed: pick a future time.
+     * @summary Rank technicians for a P0 emergency insert
+     * @param {JobRequestBusinessApiListEmergencyCandidatesRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public listEmergencyCandidates(requestParameters: JobRequestBusinessApiListEmergencyCandidatesRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).listEmergencyCandidates(requestParameters.jobRequestEmergencyCandidatesRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Real-time appointment availability from the scheduling engine: returns the bookable date + time-period windows given technician capacity, working hours and service-territory coverage. Call this before creating a job request and offer the customer ONLY the returned windows — it prevents unschedulable bookings.
+     * @summary Booking availability
      * @param {JobRequestBusinessApiListJobRequestBookingWindowsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -822,7 +2124,7 @@ export class JobRequestBusinessApi extends BaseAPI {
     }
 
     /**
-     * Keep your own copy of bookings in sync WITHOUT re-listing everything: returns the job requests whose state changed (created, status transition, reschedule, soft-delete/archive) at or after the `since` cursor, ordered oldest-change-first (updated_at ASC).  How to use it: (1) On your first poll OMIT `since` — the server primes the cursor at \"now\", returns no items and a `next_since`. (2) Store `next_since` and pass it as `since` on the next poll. (3) Apply each returned item to your store by UPSERTING on `id` (the server re-scans a ~5s safety window, so the same job may appear again — never blindly append). (4) If `has_more` is true the page filled to `limit` and more changes are already waiting — poll again immediately; otherwise wait your normal interval (e.g. 5–15s).  This is NOT pagination — it is a time-keyed change feed. Use the paginated GET /job-requests for the initial bulk load, then this endpoint to stay live. Filters (status_keys, customer_id, …) narrow the feed to the slice you care about.
+     * Keep an external system (your CRM, ERP or field-service tool) in sync with bookings WITHOUT re-listing everything: returns the job requests (work orders) whose state changed (created, status transition, reschedule, soft-delete/archive) at or after the `since` cursor, ordered oldest-change-first (updated_at ASC).  How to use it: (1) On your first poll OMIT `since` — the server primes the cursor at \"now\", returns no items and a `next_since`. (2) Store `next_since` and pass it as `since` on the next poll. (3) Apply each returned item to your store by UPSERTING on `id` (the server re-scans a ~5s safety window, so the same job may appear again — never blindly append). (4) If `has_more` is true the page filled to `limit` and more changes are already waiting — poll again immediately; otherwise wait your normal interval (e.g. 5–15s).  This is NOT pagination — it is a time-keyed change feed. Use the paginated GET /job-requests for the initial bulk load, then this endpoint to stay live. Filters (status_keys, customer_id, …) narrow the feed to the slice you care about.
      * @summary Poll for new & changed job requests (sync feed)
      * @param {JobRequestBusinessApiListJobRequestChangesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -834,7 +2136,7 @@ export class JobRequestBusinessApi extends BaseAPI {
     }
 
     /**
-     * 
+     * Paginated list of the business\'s bookings (work orders) with dispatch-oriented filters: workflow status, customer, assigned technician, scheduled date range and free-text search over code/description. This is also the SCHEDULE query: combine technician_id + scheduled_from/scheduled_to to read one technician\'s agenda for a day or week (e.g. \"what is Alex doing tomorrow\"), or just the date range for the whole team\'s calendar.
      * @summary List job requests
      * @param {JobRequestBusinessApiListJobRequestsRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -842,7 +2144,79 @@ export class JobRequestBusinessApi extends BaseAPI {
      * @memberof JobRequestBusinessApi
      */
     public listJobRequests(requestParameters: JobRequestBusinessApiListJobRequestsRequest = {}, options?: RawAxiosRequestConfig) {
-        return JobRequestBusinessApiFp(this.configuration).listJobRequests(requestParameters.statusKeys, requestParameters.status, requestParameters.customerId, requestParameters.technicianId, requestParameters.scheduledFrom, requestParameters.scheduledTo, requestParameters.q, requestParameters.sort, requestParameters.page, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+        return JobRequestBusinessApiFp(this.configuration).listJobRequests(requestParameters.statusKeys, requestParameters.status, requestParameters.priority, requestParameters.customerId, requestParameters.technicianId, requestParameters.serviceAreaId, requestParameters.scheduledFrom, requestParameters.scheduledTo, requestParameters.q, requestParameters.sort, requestParameters.page, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Bookable arrival-window slots for a quoted job, computed by the smart-assignment matching engine: each slot lists the technicians actually available to start then (skills, weekly availability, existing schedule, time off and travel all checked), with a per-technician match score. Use it to find and offer appointment times an agent or integration can then confirm (POST /job-requests/{id}/confirm with the slot\'s business_time.datetime). Same grid the end-customer\'s slot picker shows; slot width defaults to the business\'s arrival window — override via ?step_minutes (5–240). The job must be quoted first (the quote sets the visit duration the matcher schedules).
+     * @summary Matching time slots for a quoted job
+     * @param {JobRequestBusinessApiListMatchingSlotsRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public listMatchingSlots(requestParameters: JobRequestBusinessApiListMatchingSlotsRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).listMatchingSlots(requestParameters.id, requestParameters.stepMinutes, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Ranks who could serve a hypothetical visit at (lat,lng) starting `at` for `duration_minutes` — the engine applies the REAL hard filters (weekly hours, existing schedule, approved time-off, geographic service areas, optional skill floor) and returns candidates nearest-arrival first. ETA origin is each technician\'s start location (no live GPS). Use before creating a booking to propose realistic arrivals.
+     * @summary Find nearby feasible technicians (job-less location query)
+     * @param {JobRequestBusinessApiListNearbyTechniciansRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public listNearbyTechnicians(requestParameters: JobRequestBusinessApiListNearbyTechniciansRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).listNearbyTechnicians(requestParameters.lat, requestParameters.lng, requestParameters.at, requestParameters.durationMinutes, requestParameters.skillIds, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Computes (WITHOUT writing) the cascade of inserting an emergency job onto a technician at a chosen time: where the emergency lands + every job pushed back, grouped per business-local day. `displacement_mode=reassign` instead hands each displaced job to another feasible technician at its ORIGINAL window (same-day promise) — jobs with no alternate capacity fall back to reschedule and stay in `days`. `mode=overtime` keeps everyone same-day (tech works late); `mode=next_day` rolls overflow to the next working day(s). Read-only — safe to call repeatedly; commit is a separate endpoint. Isolated feature (see EMERGENCY_RESCHEDULE_DESIGN.md). 409 NEXT STEPS: EMERGENCY_RESCHEDULE_SLOT_OCCUPIED — the landing window is blocked by a job the cascade may NOT move (another P0, a crew or multi-day job): choose another technician (walk the /candidates ranking) or another time; displacement never touches P0/crew/multi-day anchors. EMERGENCY_RESCHEDULE_NOT_ELIGIBLE / CREW_UNSUPPORTED / MULTIDAY_UNSUPPORTED / NO_WORKING_DAY / IN_PAST — same remedies as /candidates.
+     * @summary Preview emergency insert + cascade reschedule
+     * @param {JobRequestBusinessApiPreviewEmergencyRescheduleRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public previewEmergencyReschedule(requestParameters: JobRequestBusinessApiPreviewEmergencyRescheduleRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).previewEmergencyReschedule(requestParameters.jobRequestEmergencyPreviewRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Computes (WITHOUT writing) the outcome of moving a confirmed job to a new time and/or technician: where it lands, every later job pushed back per `mode`, and the warnings the coordinator would accept (displaced jobs leaving their confirmed windows, overtime). Same technician = pure time move; different technician = manual reassign. Read-only — safe to call repeatedly while dragging; commit is a separate endpoint. See SCHEDULE_BOARD_DESIGN.md. Warning detail: a TECH_NOT_FEASIBLE warning carries `reason` = `cannot_arrive_in_time` (commute from the tech day-start location / shift start; `earliest_feasible_at` (RFC3339 UTC) is the first same-day time they CAN be on site — suggest it as the drop slot) | `missing_required_skills` | `not_available_today` (no working hours, approved time off, or outside the service area) | `not_lead_tier`. For a P0 move this warning is advisory (coordinator may commit anyway); for p1/p2/p3 the same condition is the hard 409 SCHEDULE_MOVE_TECH_INFEASIBLE. 409 NEXT STEPS: SCHEDULE_MOVE_NOT_ELIGIBLE (job unconfirmed/unquoted/archived/completed — not movable) · SCHEDULE_MOVE_IN_PROGRESS (tech already executing — do not move) · SCHEDULE_MOVE_IN_PAST (pick a future time) · SCHEDULE_MOVE_OUTSIDE_WINDOW (landing time outside the customer-confirmed window — hard block; pick a time inside it) · SCHEDULE_MOVE_SLOT_OCCUPIED (landing window blocked by an immovable anchor — another tech/time) · SCHEDULE_MOVE_TECH_INFEASIBLE (non-P0 hard block: target tech not qualified/available — see the TECH_NOT_FEASIBLE warning reasons; change tech or time) · SCHEDULE_MOVE_MULTIDAY_UNSUPPORTED (multi-day jobs not movable v1) · SCHEDULE_MOVE_NO_WORKING_DAY (pick a working day) · SCHEDULE_MOVE_REQUIRES_FREE_SLOT (non-P0 moves may not displace — free capacity only, unless the owner enables allow_non_p0_displacement) · SCHEDULE_MOVE_CREW_UNSTAFFABLE (a crew slot has no feasible replacement at the new time — another time).
+     * @summary Preview a schedule-board job move
+     * @param {JobRequestBusinessApiPreviewJobRequestMoveRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public previewJobRequestMove(requestParameters: JobRequestBusinessApiPreviewJobRequestMoveRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).previewJobRequestMove(requestParameters.id, requestParameters.jobRequestMovePreviewReq, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Sends the quote: sets quoted_at + duration cols, advances pending_action to confirm_booking. Status stays `booking`.
+     * @summary Fire quote (FIXED action — business)
+     * @param {JobRequestBusinessApiQuoteJobRequestRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public quoteJobRequest(requestParameters: JobRequestBusinessApiQuoteJobRequestRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).quoteJobRequest(requestParameters.id, requestParameters.jobRequestQuoteRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Sets the P0–P3 priority on a non-archived, non-completed job (Owner / Administrator / Booking Coordinator). Allowed values: \"p0\" (emergency, interrupt-driven) | \"p1\" (top — displaced only by p0; may carry an sla_deadline arming auto-escalation) | \"p2\" (standard) | \"p3\" (deferrable, first displacement victim). sla_deadline is only valid with p1 and must be in the future (business-local naive datetime); moving away from p1 disarms the SLA clock. Accepts UUID or short_code in :id.
+     * @summary Set job priority (scheduling staff)
+     * @param {JobRequestBusinessApiUpdateJobPriorityRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobRequestBusinessApi
+     */
+    public updateJobPriority(requestParameters: JobRequestBusinessApiUpdateJobPriorityRequest, options?: RawAxiosRequestConfig) {
+        return JobRequestBusinessApiFp(this.configuration).updateJobPriority(requestParameters.id, requestParameters.jobRequestUpdatePriorityRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * CrispHive Developer API
- * Public REST API for integrating CrispHive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
+ * Crisphive Developer API
+ * Public REST API for integrating Crisphive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
  *
  * The version of the OpenAPI document: 1.0
  * 
@@ -34,7 +34,7 @@ import type { ResponseEnvelope } from '../models';
 export const JobTypesApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * 
+         * Returns one entry of the business\'s service catalog (job/work-order type) with its localized display name — e.g. an HVAC tune-up, drain cleaning or electrical inspection offering.
          * @summary Get a job type
          * @param {string} id Job Type ID
          * @param {*} [options] Override http request option.
@@ -72,7 +72,7 @@ export const JobTypesApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * 
+         * Returns the business\'s service catalog — the job/work-order types it offers (e.g. installation, repair, maintenance, inspection for trades like HVAC, plumbing, electrical, cleaning). Use it to discover the `job_type_id` accepted when booking a job request, or to render a services menu on your own site.
          * @summary List job types
          * @param {string} [status] Filter by status (active|inactive)
          * @param {*} [options] Override http request option.
@@ -121,7 +121,7 @@ export const JobTypesApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = JobTypesApiAxiosParamCreator(configuration)
     return {
         /**
-         * 
+         * Returns one entry of the business\'s service catalog (job/work-order type) with its localized display name — e.g. an HVAC tune-up, drain cleaning or electrical inspection offering.
          * @summary Get a job type
          * @param {string} id Job Type ID
          * @param {*} [options] Override http request option.
@@ -134,7 +134,7 @@ export const JobTypesApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * 
+         * Returns the business\'s service catalog — the job/work-order types it offers (e.g. installation, repair, maintenance, inspection for trades like HVAC, plumbing, electrical, cleaning). Use it to discover the `job_type_id` accepted when booking a job request, or to render a services menu on your own site.
          * @summary List job types
          * @param {string} [status] Filter by status (active|inactive)
          * @param {*} [options] Override http request option.
@@ -157,7 +157,7 @@ export const JobTypesApiFactory = function (configuration?: Configuration, baseP
     const localVarFp = JobTypesApiFp(configuration)
     return {
         /**
-         * 
+         * Returns one entry of the business\'s service catalog (job/work-order type) with its localized display name — e.g. an HVAC tune-up, drain cleaning or electrical inspection offering.
          * @summary Get a job type
          * @param {JobTypesApiGetJobTypeRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -167,7 +167,7 @@ export const JobTypesApiFactory = function (configuration?: Configuration, baseP
             return localVarFp.getJobType(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * 
+         * Returns the business\'s service catalog — the job/work-order types it offers (e.g. installation, repair, maintenance, inspection for trades like HVAC, plumbing, electrical, cleaning). Use it to discover the `job_type_id` accepted when booking a job request, or to render a services menu on your own site.
          * @summary List job types
          * @param {JobTypesApiListJobTypesRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -215,7 +215,7 @@ export interface JobTypesApiListJobTypesRequest {
  */
 export class JobTypesApi extends BaseAPI {
     /**
-     * 
+     * Returns one entry of the business\'s service catalog (job/work-order type) with its localized display name — e.g. an HVAC tune-up, drain cleaning or electrical inspection offering.
      * @summary Get a job type
      * @param {JobTypesApiGetJobTypeRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -227,7 +227,7 @@ export class JobTypesApi extends BaseAPI {
     }
 
     /**
-     * 
+     * Returns the business\'s service catalog — the job/work-order types it offers (e.g. installation, repair, maintenance, inspection for trades like HVAC, plumbing, electrical, cleaning). Use it to discover the `job_type_id` accepted when booking a job request, or to render a services menu on your own site.
      * @summary List job types
      * @param {JobTypesApiListJobTypesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.

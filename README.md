@@ -1,7 +1,7 @@
-# CrispHive Node
+# Crisphive Node
 
 The official Node.js / TypeScript SDK for the
-[CrispHive API](https://docs.crisphive.com/).
+[Crisphive API](https://docs.crisphive.com/).
 
 Typed access to the public `/v1` API — customers, bookings, catalog, team and
 fleet. Works in Node.js and the browser (built on [axios](https://github.com/axios/axios)).
@@ -19,7 +19,7 @@ npm install @crisphive/sdk
 ## Authentication
 
 Every request is authenticated with a secret API key sent as a bearer token.
-Create keys from your CrispHive business dashboard. **The key prefix selects the
+Create keys from your Crisphive business dashboard. **The key prefix selects the
 data environment:**
 
 - `chsk_live_…` → live (production) data
@@ -68,7 +68,7 @@ create a duplicate. Pass it via the per-request axios options.
 ## Errors
 
 A non-2xx response rejects with an axios error; read `err.response?.status` and
-`err.response?.data` for the CrispHive error code.
+`err.response?.data` for the Crisphive error code.
 
 ## Documentation
 

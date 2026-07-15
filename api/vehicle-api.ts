@@ -1,8 +1,8 @@
 /* tslint:disable */
 /* eslint-disable */
 /**
- * CrispHive Developer API
- * Public REST API for integrating CrispHive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
+ * Crisphive Developer API
+ * Public REST API for integrating Crisphive from your own backend. Authenticate every request with a secret API key as a Bearer token (`Authorization: Bearer chsk_live_…`). The key prefix selects the data environment: `chsk_live_…` → production (live), `chsk_test_…` → sandbox (isolated test).  **Key scopes (restricted keys).** A key is either *full-access* (can call every endpoint below) or *restricted* to a set of permission codes chosen at creation — the same codes as the dashboard permission grid (e.g. `customers_view`, `job_create`, `team_manage`). A restricted key calling an endpoint outside its scope gets `403`. The full code list is the permission catalog (`GET /permission/modules` on the dashboard API). Create, scope, and revoke keys from the business dashboard.  Every response is wrapped in the envelope `{ \"error_code\": 0, \"message\": \"Success\", \"data\": <payload> }`.
  *
  * The version of the OpenAPI document: 1.0
  * 
@@ -34,7 +34,7 @@ import type { ResponseEnvelope } from '../models';
 export const VehicleApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
         /**
-         * Returns details of a specific vehicle
+         * Returns one fleet vehicle (service van/truck): identity, plate, operational status (idle, on job, maintenance) and which technicians use it — the fleet-management view of a single asset.
          * @summary Get a vehicle
          * @param {string} id Vehicle ID
          * @param {*} [options] Override http request option.
@@ -72,7 +72,7 @@ export const VehicleApiAxiosParamCreator = function (configuration?: Configurati
             };
         },
         /**
-         * Returns a paginated list of vehicles for the business
+         * Returns the business\'s fleet: paginated service vehicles (vans/trucks) with operational status (idle, on job, maintenance) — the fleet inventory behind crew carpooling and job mobilization. Supports the `since` cursor for incremental fleet sync.
          * @summary List vehicles
          * @param {number} [page] Page number (default 1)
          * @param {number} [limit] Items per page (default 15, max 1000)
@@ -141,7 +141,7 @@ export const VehicleApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = VehicleApiAxiosParamCreator(configuration)
     return {
         /**
-         * Returns details of a specific vehicle
+         * Returns one fleet vehicle (service van/truck): identity, plate, operational status (idle, on job, maintenance) and which technicians use it — the fleet-management view of a single asset.
          * @summary Get a vehicle
          * @param {string} id Vehicle ID
          * @param {*} [options] Override http request option.
@@ -154,7 +154,7 @@ export const VehicleApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Returns a paginated list of vehicles for the business
+         * Returns the business\'s fleet: paginated service vehicles (vans/trucks) with operational status (idle, on job, maintenance) — the fleet inventory behind crew carpooling and job mobilization. Supports the `since` cursor for incremental fleet sync.
          * @summary List vehicles
          * @param {number} [page] Page number (default 1)
          * @param {number} [limit] Items per page (default 15, max 1000)
@@ -181,7 +181,7 @@ export const VehicleApiFactory = function (configuration?: Configuration, basePa
     const localVarFp = VehicleApiFp(configuration)
     return {
         /**
-         * Returns details of a specific vehicle
+         * Returns one fleet vehicle (service van/truck): identity, plate, operational status (idle, on job, maintenance) and which technicians use it — the fleet-management view of a single asset.
          * @summary Get a vehicle
          * @param {VehicleApiGetVehicleRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -191,7 +191,7 @@ export const VehicleApiFactory = function (configuration?: Configuration, basePa
             return localVarFp.getVehicle(requestParameters.id, options).then((request) => request(axios, basePath));
         },
         /**
-         * Returns a paginated list of vehicles for the business
+         * Returns the business\'s fleet: paginated service vehicles (vans/trucks) with operational status (idle, on job, maintenance) — the fleet inventory behind crew carpooling and job mobilization. Supports the `since` cursor for incremental fleet sync.
          * @summary List vehicles
          * @param {VehicleApiListVehiclesRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -267,7 +267,7 @@ export interface VehicleApiListVehiclesRequest {
  */
 export class VehicleApi extends BaseAPI {
     /**
-     * Returns details of a specific vehicle
+     * Returns one fleet vehicle (service van/truck): identity, plate, operational status (idle, on job, maintenance) and which technicians use it — the fleet-management view of a single asset.
      * @summary Get a vehicle
      * @param {VehicleApiGetVehicleRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
@@ -279,7 +279,7 @@ export class VehicleApi extends BaseAPI {
     }
 
     /**
-     * Returns a paginated list of vehicles for the business
+     * Returns the business\'s fleet: paginated service vehicles (vans/trucks) with operational status (idle, on job, maintenance) — the fleet inventory behind crew carpooling and job mobilization. Supports the `since` cursor for incremental fleet sync.
      * @summary List vehicles
      * @param {VehicleApiListVehiclesRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.
