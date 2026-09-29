@@ -13,6 +13,12 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { JobDateBusinessRange } from './job-date-business-range';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { JobRequestBlocker } from './job-request-blocker';
 
 /**
  * 
@@ -21,11 +27,23 @@
  */
 export interface JobRequestMoveWarning {
     /**
-     * Warning kind: TECH_NOT_FEASIBLE | PUSHED_OUTSIDE_WINDOW | OVERTIME | TIME_OFF_OVERLAP | VEHICLE_CONFLICT.
+     * Every hard filter that refused the technician, most-structural first (TECH_NOT_FEASIBLE only). blockers[0] is the row Reason is derived from.
+     * @type {Array<JobRequestBlocker>}
+     * @memberof JobRequestMoveWarning
+     */
+    'blockers'?: Array<JobRequestBlocker>;
+    /**
+     * Warning kind: MOVED_OUTSIDE_WINDOW | TECH_NOT_FEASIBLE | PUSHED_OUTSIDE_WINDOW | OVERTIME | TIME_OFF_OVERLAP | CALENDAR_OVERLAP | VEHICLE_CONFLICT | AFTER_HOURS.  CALENDAR_OVERLAP is a SEPARATE value from TIME_OFF_OVERLAP on purpose: approved time off is a record the coordinator can open, a personal calendar event is one we cannot see at all.
      * @type {string}
      * @memberof JobRequestMoveWarning
      */
     'code'?: JobRequestMoveWarningCodeEnum;
+    /**
+     * MOVED_OUTSIDE_WINDOW only: the customer-confirmed business-local ranges the job was booked into, so the board can show what the customer requested next to the override warning.
+     * @type {Array<JobDateBusinessRange>}
+     * @memberof JobRequestMoveWarning
+     */
+    'customer_window'?: Array<JobDateBusinessRange>;
     /**
      * First same-day time the target technician CAN be on site (UTC) — only with reason=cannot_arrive_in_time; suggest it as the drop slot.
      * @type {string}
@@ -33,7 +51,7 @@ export interface JobRequestMoveWarning {
      */
     'earliest_feasible_at'?: string;
     /**
-     * The displaced job this warning is about (per-job warnings only).
+     * The job this warning is about (per-job warnings only).
      * @type {string}
      * @memberof JobRequestMoveWarning
      */
@@ -51,7 +69,7 @@ export interface JobRequestMoveWarning {
      */
     'minutes'?: number;
     /**
-     * Machine cause, TECH_NOT_FEASIBLE only: cannot_arrive_in_time (see earliest_feasible_at) | missing_required_skills | not_available_today | not_lead_tier.
+     * Machine cause, TECH_NOT_FEASIBLE only. Blockers[0].kind, or not_available_today when the diagnosis was unavailable. EXTEND-ONLY: a client switching on this MUST carry a default branch.  calendar_conflict is the one value NOT in smartassign.BlockerKind: it is raised by the crew-assign path, never by ExplainInfeasibility, so it never appears in Blockers. A busy window on the technician\'s own PERSONAL calendar covers the visit. It is kept separate from on_time_off because approved leave is a record the coordinator can open and weigh, while this one is the obstacle we deliberately cannot see, so the action is a phone call. It may arrive alongside earliest_feasible_at.
      * @type {string}
      * @memberof JobRequestMoveWarning
      */
@@ -59,19 +77,29 @@ export interface JobRequestMoveWarning {
 }
 
 export const JobRequestMoveWarningCodeEnum = {
+    MovedOutsideWindow: 'MOVED_OUTSIDE_WINDOW',
     TechNotFeasible: 'TECH_NOT_FEASIBLE',
     PushedOutsideWindow: 'PUSHED_OUTSIDE_WINDOW',
     Overtime: 'OVERTIME',
     TimeOffOverlap: 'TIME_OFF_OVERLAP',
-    VehicleConflict: 'VEHICLE_CONFLICT'
+    CalendarOverlap: 'CALENDAR_OVERLAP',
+    VehicleConflict: 'VEHICLE_CONFLICT',
+    AfterHours: 'AFTER_HOURS'
 } as const;
 
 export type JobRequestMoveWarningCodeEnum = typeof JobRequestMoveWarningCodeEnum[keyof typeof JobRequestMoveWarningCodeEnum];
 export const JobRequestMoveWarningReasonEnum = {
-    CannotArriveInTime: 'cannot_arrive_in_time',
+    OutsideServiceArea: 'outside_service_area',
     MissingRequiredSkills: 'missing_required_skills',
-    NotAvailableToday: 'not_available_today',
-    NotLeadTier: 'not_lead_tier'
+    NotLeadTier: 'not_lead_tier',
+    NoWorkingDay: 'no_working_day',
+    OnTimeOff: 'on_time_off',
+    OffShift: 'off_shift',
+    Occupied: 'occupied',
+    VisitTooLong: 'visit_too_long',
+    CannotArriveInTime: 'cannot_arrive_in_time',
+    CalendarConflict: 'calendar_conflict',
+    NotAvailableToday: 'not_available_today'
 } as const;
 
 export type JobRequestMoveWarningReasonEnum = typeof JobRequestMoveWarningReasonEnum[keyof typeof JobRequestMoveWarningReasonEnum];

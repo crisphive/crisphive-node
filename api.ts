@@ -20,5 +20,7 @@ export * from './api/job-request-business-api';
 export * from './api/job-types-api';
 export * from './api/service-area-api';
 export * from './api/technician-api';
+export * from './api/technician-time-off-api';
 export * from './api/vehicle-api';
+export * from './api/webhooks-api';
 

@@ -22,6 +22,10 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CreateSkill200Response } from '../models';
+// @ts-ignore
+import type { CreateSkillCategory200Response } from '../models';
+// @ts-ignore
 import type { ListSkillCategories200Response } from '../models';
 // @ts-ignore
 import type { ListSkills200Response } from '../models';
@@ -32,6 +36,12 @@ import type { ListTechnicianSkills200Response } from '../models';
 // @ts-ignore
 import type { ResponseEnvelope } from '../models';
 // @ts-ignore
+import type { SkillCategoryCreateRequest } from '../models';
+// @ts-ignore
+import type { SkillCreateRequest } from '../models';
+// @ts-ignore
+import type { SkillUpdateRequest } from '../models';
+// @ts-ignore
 import type { TechnicianSkillsRequest } from '../models';
 /**
  * BusinessSkillApi - axios parameter creator
@@ -39,6 +49,174 @@ import type { TechnicianSkillsRequest } from '../models';
  */
 export const BusinessSkillApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * Creates a skill under the given category. New skills are active by default. Skill names must be unique within their category.
+         * @summary Create a skill
+         * @param {string} id Skill category ID (UUID)
+         * @param {SkillCreateRequest} skillCreateRequest Skill details (name max 200 chars, description max 4000 chars)
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createSkill: async (id: string, skillCreateRequest: SkillCreateRequest, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('createSkill', 'id', id)
+            // verify required parameter 'skillCreateRequest' is not null or undefined
+            assertParamExists('createSkill', 'skillCreateRequest', skillCreateRequest)
+            const localVarPath = `/skill-categories/{id}/skills`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(skillCreateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Creates a skill category for the current business. Categories group skills (e.g. \"Plumbing\", \"Electrical\"). Names must be unique within a business.
+         * @summary Create a skill category
+         * @param {SkillCategoryCreateRequest} skillCategoryCreateRequest Category name (max 200 chars)
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createSkillCategory: async (skillCategoryCreateRequest: SkillCategoryCreateRequest, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'skillCategoryCreateRequest' is not null or undefined
+            assertParamExists('createSkillCategory', 'skillCategoryCreateRequest', skillCategoryCreateRequest)
+            const localVarPath = `/skill-categories`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(skillCategoryCreateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Permanently deletes a skill. Returns SKILL_HAS_MEMBERS (409) if any active technicians are still assigned — unassign all technicians first.
+         * @summary Delete a skill
+         * @param {string} id Skill ID (UUID)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSkill: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('deleteSkill', 'id', id)
+            const localVarPath = `/skills/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Permanently deletes a skill category. Returns SKILL_CATEGORY_NOT_EMPTY (409) if any skills still belong to the category — remove or move all skills first.
+         * @summary Delete a skill category
+         * @param {string} id Skill category ID (UUID)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSkillCategory: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('deleteSkillCategory', 'id', id)
+            const localVarPath = `/skill-categories/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * Returns paginated skill categories — how the business groups technician qualifications by trade or specialty (e.g. HVAC, plumbing, electrical) — ordered alphabetically.
          * @summary List skill categories
@@ -262,6 +440,50 @@ export const BusinessSkillApiAxiosParamCreator = function (configuration?: Confi
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Updates a skill\'s name, description, and/or active status. `is_active` is optional — omit the field entirely to keep the current value; send `false` to deactivate or `true` to reactivate. Deactivating a skill prevents new technician assignments but does not remove existing ones.
+         * @summary Update a skill
+         * @param {string} id Skill ID (UUID)
+         * @param {SkillUpdateRequest} skillUpdateRequest Fields to update
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateSkill: async (id: string, skillUpdateRequest: SkillUpdateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateSkill', 'id', id)
+            // verify required parameter 'skillUpdateRequest' is not null or undefined
+            assertParamExists('updateSkill', 'skillUpdateRequest', skillUpdateRequest)
+            const localVarPath = `/skills/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(skillUpdateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -272,6 +494,61 @@ export const BusinessSkillApiAxiosParamCreator = function (configuration?: Confi
 export const BusinessSkillApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = BusinessSkillApiAxiosParamCreator(configuration)
     return {
+        /**
+         * Creates a skill under the given category. New skills are active by default. Skill names must be unique within their category.
+         * @summary Create a skill
+         * @param {string} id Skill category ID (UUID)
+         * @param {SkillCreateRequest} skillCreateRequest Skill details (name max 200 chars, description max 4000 chars)
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createSkill(id: string, skillCreateRequest: SkillCreateRequest, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateSkill200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createSkill(id, skillCreateRequest, idempotencyKey, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BusinessSkillApi.createSkill']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Creates a skill category for the current business. Categories group skills (e.g. \"Plumbing\", \"Electrical\"). Names must be unique within a business.
+         * @summary Create a skill category
+         * @param {SkillCategoryCreateRequest} skillCategoryCreateRequest Category name (max 200 chars)
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createSkillCategory(skillCategoryCreateRequest: SkillCategoryCreateRequest, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateSkillCategory200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createSkillCategory(skillCategoryCreateRequest, idempotencyKey, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BusinessSkillApi.createSkillCategory']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Permanently deletes a skill. Returns SKILL_HAS_MEMBERS (409) if any active technicians are still assigned — unassign all technicians first.
+         * @summary Delete a skill
+         * @param {string} id Skill ID (UUID)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteSkill(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteSkill(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BusinessSkillApi.deleteSkill']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Permanently deletes a skill category. Returns SKILL_CATEGORY_NOT_EMPTY (409) if any skills still belong to the category — remove or move all skills first.
+         * @summary Delete a skill category
+         * @param {string} id Skill category ID (UUID)
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteSkillCategory(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteSkillCategory(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BusinessSkillApi.deleteSkillCategory']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
         /**
          * Returns paginated skill categories — how the business groups technician qualifications by trade or specialty (e.g. HVAC, plumbing, electrical) — ordered alphabetically.
          * @summary List skill categories
@@ -343,6 +620,20 @@ export const BusinessSkillApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['BusinessSkillApi.replaceTechnicianSkills']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Updates a skill\'s name, description, and/or active status. `is_active` is optional — omit the field entirely to keep the current value; send `false` to deactivate or `true` to reactivate. Deactivating a skill prevents new technician assignments but does not remove existing ones.
+         * @summary Update a skill
+         * @param {string} id Skill ID (UUID)
+         * @param {SkillUpdateRequest} skillUpdateRequest Fields to update
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updateSkill(id: string, skillUpdateRequest: SkillUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateSkill(id, skillUpdateRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['BusinessSkillApi.updateSkill']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -353,6 +644,46 @@ export const BusinessSkillApiFp = function(configuration?: Configuration) {
 export const BusinessSkillApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = BusinessSkillApiFp(configuration)
     return {
+        /**
+         * Creates a skill under the given category. New skills are active by default. Skill names must be unique within their category.
+         * @summary Create a skill
+         * @param {BusinessSkillApiCreateSkillRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createSkill(requestParameters: BusinessSkillApiCreateSkillRequest, options?: RawAxiosRequestConfig): AxiosPromise<CreateSkill200Response> {
+            return localVarFp.createSkill(requestParameters.id, requestParameters.skillCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Creates a skill category for the current business. Categories group skills (e.g. \"Plumbing\", \"Electrical\"). Names must be unique within a business.
+         * @summary Create a skill category
+         * @param {BusinessSkillApiCreateSkillCategoryRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createSkillCategory(requestParameters: BusinessSkillApiCreateSkillCategoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<CreateSkillCategory200Response> {
+            return localVarFp.createSkillCategory(requestParameters.skillCategoryCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Permanently deletes a skill. Returns SKILL_HAS_MEMBERS (409) if any active technicians are still assigned — unassign all technicians first.
+         * @summary Delete a skill
+         * @param {BusinessSkillApiDeleteSkillRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSkill(requestParameters: BusinessSkillApiDeleteSkillRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.deleteSkill(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Permanently deletes a skill category. Returns SKILL_CATEGORY_NOT_EMPTY (409) if any skills still belong to the category — remove or move all skills first.
+         * @summary Delete a skill category
+         * @param {BusinessSkillApiDeleteSkillCategoryRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteSkillCategory(requestParameters: BusinessSkillApiDeleteSkillCategoryRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.deleteSkillCategory(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
         /**
          * Returns paginated skill categories — how the business groups technician qualifications by trade or specialty (e.g. HVAC, plumbing, electrical) — ordered alphabetically.
          * @summary List skill categories
@@ -402,8 +733,95 @@ export const BusinessSkillApiFactory = function (configuration?: Configuration, 
         replaceTechnicianSkills(requestParameters: BusinessSkillApiReplaceTechnicianSkillsRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
             return localVarFp.replaceTechnicianSkills(requestParameters.id, requestParameters.technicianSkillsRequest, options).then((request) => request(axios, basePath));
         },
+        /**
+         * Updates a skill\'s name, description, and/or active status. `is_active` is optional — omit the field entirely to keep the current value; send `false` to deactivate or `true` to reactivate. Deactivating a skill prevents new technician assignments but does not remove existing ones.
+         * @summary Update a skill
+         * @param {BusinessSkillApiUpdateSkillRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateSkill(requestParameters: BusinessSkillApiUpdateSkillRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.updateSkill(requestParameters.id, requestParameters.skillUpdateRequest, options).then((request) => request(axios, basePath));
+        },
     };
 };
+
+/**
+ * Request parameters for createSkill operation in BusinessSkillApi.
+ * @export
+ * @interface BusinessSkillApiCreateSkillRequest
+ */
+export interface BusinessSkillApiCreateSkillRequest {
+    /**
+     * Skill category ID (UUID)
+     * @type {string}
+     * @memberof BusinessSkillApiCreateSkill
+     */
+    readonly id: string
+
+    /**
+     * Skill details (name max 200 chars, description max 4000 chars)
+     * @type {SkillCreateRequest}
+     * @memberof BusinessSkillApiCreateSkill
+     */
+    readonly skillCreateRequest: SkillCreateRequest
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+     * @type {string}
+     * @memberof BusinessSkillApiCreateSkill
+     */
+    readonly idempotencyKey?: string
+}
+
+/**
+ * Request parameters for createSkillCategory operation in BusinessSkillApi.
+ * @export
+ * @interface BusinessSkillApiCreateSkillCategoryRequest
+ */
+export interface BusinessSkillApiCreateSkillCategoryRequest {
+    /**
+     * Category name (max 200 chars)
+     * @type {SkillCategoryCreateRequest}
+     * @memberof BusinessSkillApiCreateSkillCategory
+     */
+    readonly skillCategoryCreateRequest: SkillCategoryCreateRequest
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+     * @type {string}
+     * @memberof BusinessSkillApiCreateSkillCategory
+     */
+    readonly idempotencyKey?: string
+}
+
+/**
+ * Request parameters for deleteSkill operation in BusinessSkillApi.
+ * @export
+ * @interface BusinessSkillApiDeleteSkillRequest
+ */
+export interface BusinessSkillApiDeleteSkillRequest {
+    /**
+     * Skill ID (UUID)
+     * @type {string}
+     * @memberof BusinessSkillApiDeleteSkill
+     */
+    readonly id: string
+}
+
+/**
+ * Request parameters for deleteSkillCategory operation in BusinessSkillApi.
+ * @export
+ * @interface BusinessSkillApiDeleteSkillCategoryRequest
+ */
+export interface BusinessSkillApiDeleteSkillCategoryRequest {
+    /**
+     * Skill category ID (UUID)
+     * @type {string}
+     * @memberof BusinessSkillApiDeleteSkillCategory
+     */
+    readonly id: string
+}
 
 /**
  * Request parameters for listSkillCategories operation in BusinessSkillApi.
@@ -511,12 +929,81 @@ export interface BusinessSkillApiReplaceTechnicianSkillsRequest {
 }
 
 /**
+ * Request parameters for updateSkill operation in BusinessSkillApi.
+ * @export
+ * @interface BusinessSkillApiUpdateSkillRequest
+ */
+export interface BusinessSkillApiUpdateSkillRequest {
+    /**
+     * Skill ID (UUID)
+     * @type {string}
+     * @memberof BusinessSkillApiUpdateSkill
+     */
+    readonly id: string
+
+    /**
+     * Fields to update
+     * @type {SkillUpdateRequest}
+     * @memberof BusinessSkillApiUpdateSkill
+     */
+    readonly skillUpdateRequest: SkillUpdateRequest
+}
+
+/**
  * BusinessSkillApi - object-oriented interface
  * @export
  * @class BusinessSkillApi
  * @extends {BaseAPI}
  */
 export class BusinessSkillApi extends BaseAPI {
+    /**
+     * Creates a skill under the given category. New skills are active by default. Skill names must be unique within their category.
+     * @summary Create a skill
+     * @param {BusinessSkillApiCreateSkillRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BusinessSkillApi
+     */
+    public createSkill(requestParameters: BusinessSkillApiCreateSkillRequest, options?: RawAxiosRequestConfig) {
+        return BusinessSkillApiFp(this.configuration).createSkill(requestParameters.id, requestParameters.skillCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Creates a skill category for the current business. Categories group skills (e.g. \"Plumbing\", \"Electrical\"). Names must be unique within a business.
+     * @summary Create a skill category
+     * @param {BusinessSkillApiCreateSkillCategoryRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BusinessSkillApi
+     */
+    public createSkillCategory(requestParameters: BusinessSkillApiCreateSkillCategoryRequest, options?: RawAxiosRequestConfig) {
+        return BusinessSkillApiFp(this.configuration).createSkillCategory(requestParameters.skillCategoryCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Permanently deletes a skill. Returns SKILL_HAS_MEMBERS (409) if any active technicians are still assigned — unassign all technicians first.
+     * @summary Delete a skill
+     * @param {BusinessSkillApiDeleteSkillRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BusinessSkillApi
+     */
+    public deleteSkill(requestParameters: BusinessSkillApiDeleteSkillRequest, options?: RawAxiosRequestConfig) {
+        return BusinessSkillApiFp(this.configuration).deleteSkill(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Permanently deletes a skill category. Returns SKILL_CATEGORY_NOT_EMPTY (409) if any skills still belong to the category — remove or move all skills first.
+     * @summary Delete a skill category
+     * @param {BusinessSkillApiDeleteSkillCategoryRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BusinessSkillApi
+     */
+    public deleteSkillCategory(requestParameters: BusinessSkillApiDeleteSkillCategoryRequest, options?: RawAxiosRequestConfig) {
+        return BusinessSkillApiFp(this.configuration).deleteSkillCategory(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Returns paginated skill categories — how the business groups technician qualifications by trade or specialty (e.g. HVAC, plumbing, electrical) — ordered alphabetically.
      * @summary List skill categories
@@ -574,6 +1061,18 @@ export class BusinessSkillApi extends BaseAPI {
      */
     public replaceTechnicianSkills(requestParameters: BusinessSkillApiReplaceTechnicianSkillsRequest, options?: RawAxiosRequestConfig) {
         return BusinessSkillApiFp(this.configuration).replaceTechnicianSkills(requestParameters.id, requestParameters.technicianSkillsRequest, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Updates a skill\'s name, description, and/or active status. `is_active` is optional — omit the field entirely to keep the current value; send `false` to deactivate or `true` to reactivate. Deactivating a skill prevents new technician assignments but does not remove existing ones.
+     * @summary Update a skill
+     * @param {BusinessSkillApiUpdateSkillRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof BusinessSkillApi
+     */
+    public updateSkill(requestParameters: BusinessSkillApiUpdateSkillRequest, options?: RawAxiosRequestConfig) {
+        return BusinessSkillApiFp(this.configuration).updateSkill(requestParameters.id, requestParameters.skillUpdateRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

@@ -15,6 +15,9 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { JobRequestMoveWarning } from './job-request-move-warning';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { JobRequestRescheduleDay } from './job-request-reschedule-day';
 
 /**
@@ -77,5 +80,11 @@ export interface JobRequestEmergencyCandidate {
      * @memberof JobRequestEmergencyCandidate
      */
     'travel_minutes'?: number;
+    /**
+     * Per-technician warnings, e.g. TIME_OFF_OVERLAP when this technician is on approved leave at the requested time (only reachable with after_hours_override, which stops leave from rejecting).
+     * @type {Array<JobRequestMoveWarning>}
+     * @memberof JobRequestEmergencyCandidate
+     */
+    'warnings'?: Array<JobRequestMoveWarning>;
 }
 

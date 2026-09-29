@@ -1,11 +1,11 @@
 {
   "name": "@crisphive/sdk",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Official Node.js/TypeScript SDK for the Crisphive API.",
   "author": "CrisphiveDeveloper <developer@crisphive.com>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/crisphive/crisphive-node.git"
+    "url": "git+https://github.com/crisphive/crisphive-node.git"
   },
   "keywords": [
     "axios",

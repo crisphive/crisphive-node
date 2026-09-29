@@ -22,17 +22,105 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CreateServiceArea200Response } from '../models';
+// @ts-ignore
 import type { GetServiceArea200Response } from '../models';
 // @ts-ignore
 import type { ListServiceAreas200Response } from '../models';
 // @ts-ignore
 import type { ResponseEnvelope } from '../models';
+// @ts-ignore
+import type { ServiceAreaCreateRequest } from '../models';
+// @ts-ignore
+import type { ServiceAreaUpdateRequest } from '../models';
 /**
  * ServiceAreaApi - axios parameter creator
  * @export
  */
 export const ServiceAreaApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * Creates a service area: a named region used as a HARD filter when deciding who can take a job. A technician assigned to no area covering the job\'s address is never offered by listNearbyTechnicians, listMatchingSlots or listCrewCandidates, and never auto-assigned at confirm, whatever their skills or availability say.  `name` is the only required field and must be unique (SERVICE_AREA_DUPLICATE_NAME). Coverage is matched two ways: with a `boundary` (GeoJSON polygon), a geocoded address must fall inside the polygon; without one, the area matches addresses by equality on its postal_code, city or district. A polygon is the precise option; the administrative fields are the fallback, and also what matches jobs whose address could not be geocoded. An invalid polygon is refused with SERVICE_AREA_INVALID_BOUNDARY.  Creating the area does not staff it. Assign technicians with replaceTechnicianServiceAreas, or pass `service_area_ids` to createTechnician.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retry does not create a duplicate area.
+         * @summary Define a territory the business serves
+         * @param {ServiceAreaCreateRequest} serviceAreaCreateRequest Service area details
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createServiceArea: async (serviceAreaCreateRequest: ServiceAreaCreateRequest, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'serviceAreaCreateRequest' is not null or undefined
+            assertParamExists('createServiceArea', 'serviceAreaCreateRequest', serviceAreaCreateRequest)
+            const localVarPath = `/service-areas`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(serviceAreaCreateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Soft-deletes the service area: it disappears from listServiceAreas and stops counting for coverage immediately. Technician assignments to it are left in place but no longer grant coverage.  The consequence is easy to underestimate: technicians whose only coverage was this area become unmatchable for addresses inside it. Jobs already assigned keep their technician, but any re-plan (reassign, board move, confirm of a pending job, the slot picker) can find no feasible crew there. Before deleting, re-check listCrewCandidates on upcoming jobs in that territory.  If you are reshaping coverage rather than withdrawing from it, edit the polygon or postal/city fields with updateServiceArea instead; that keeps the area and its technician assignments working.
+         * @summary Stop serving a territory
+         * @param {string} id Service Area ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteServiceArea: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('deleteServiceArea', 'id', id)
+            const localVarPath = `/service-areas/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * Returns one service area — a geographic coverage zone (service territory) the business operates in, with its name and geometry metadata. Reference its UUID as `service_area_id` on customer records for territory-aware dispatch.
          * @summary Get a service area
@@ -115,6 +203,50 @@ export const ServiceAreaApiAxiosParamCreator = function (configuration?: Configu
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Edits a service area in place, keeping its id and every technician already assigned to it.  Partial update: omit a field to keep it, send \"\" to clear an optional text field; `name` rejects \"\". `boundary` is the one to watch: omitting it KEEPS the stored polygon, while sending one REPLACES it outright (no partial merge of geometry). This tool cannot remove a polygon once set.  A boundary or postal/city change takes effect for every NEW matching decision (quote checks, confirm, reassign, board moves, slot pickers), including for jobs already on the calendar when they are next re-planned. Jobs already assigned are not re-evaluated automatically, so after moving an edge, re-check listCrewCandidates on upcoming jobs near it.
+         * @summary Adjust a territory\'s details or its boundary
+         * @param {string} id Service Area ID
+         * @param {ServiceAreaUpdateRequest} serviceAreaUpdateRequest Service area details
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateServiceArea: async (id: string, serviceAreaUpdateRequest: ServiceAreaUpdateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateServiceArea', 'id', id)
+            // verify required parameter 'serviceAreaUpdateRequest' is not null or undefined
+            assertParamExists('updateServiceArea', 'serviceAreaUpdateRequest', serviceAreaUpdateRequest)
+            const localVarPath = `/service-areas/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(serviceAreaUpdateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -125,6 +257,33 @@ export const ServiceAreaApiAxiosParamCreator = function (configuration?: Configu
 export const ServiceAreaApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = ServiceAreaApiAxiosParamCreator(configuration)
     return {
+        /**
+         * Creates a service area: a named region used as a HARD filter when deciding who can take a job. A technician assigned to no area covering the job\'s address is never offered by listNearbyTechnicians, listMatchingSlots or listCrewCandidates, and never auto-assigned at confirm, whatever their skills or availability say.  `name` is the only required field and must be unique (SERVICE_AREA_DUPLICATE_NAME). Coverage is matched two ways: with a `boundary` (GeoJSON polygon), a geocoded address must fall inside the polygon; without one, the area matches addresses by equality on its postal_code, city or district. A polygon is the precise option; the administrative fields are the fallback, and also what matches jobs whose address could not be geocoded. An invalid polygon is refused with SERVICE_AREA_INVALID_BOUNDARY.  Creating the area does not staff it. Assign technicians with replaceTechnicianServiceAreas, or pass `service_area_ids` to createTechnician.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retry does not create a duplicate area.
+         * @summary Define a territory the business serves
+         * @param {ServiceAreaCreateRequest} serviceAreaCreateRequest Service area details
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createServiceArea(serviceAreaCreateRequest: ServiceAreaCreateRequest, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateServiceArea200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createServiceArea(serviceAreaCreateRequest, idempotencyKey, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ServiceAreaApi.createServiceArea']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Soft-deletes the service area: it disappears from listServiceAreas and stops counting for coverage immediately. Technician assignments to it are left in place but no longer grant coverage.  The consequence is easy to underestimate: technicians whose only coverage was this area become unmatchable for addresses inside it. Jobs already assigned keep their technician, but any re-plan (reassign, board move, confirm of a pending job, the slot picker) can find no feasible crew there. Before deleting, re-check listCrewCandidates on upcoming jobs in that territory.  If you are reshaping coverage rather than withdrawing from it, edit the polygon or postal/city fields with updateServiceArea instead; that keeps the area and its technician assignments working.
+         * @summary Stop serving a territory
+         * @param {string} id Service Area ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteServiceArea(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteServiceArea(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ServiceAreaApi.deleteServiceArea']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
         /**
          * Returns one service area — a geographic coverage zone (service territory) the business operates in, with its name and geometry metadata. Reference its UUID as `service_area_id` on customer records for territory-aware dispatch.
          * @summary Get a service area
@@ -152,6 +311,20 @@ export const ServiceAreaApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['ServiceAreaApi.listServiceAreas']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Edits a service area in place, keeping its id and every technician already assigned to it.  Partial update: omit a field to keep it, send \"\" to clear an optional text field; `name` rejects \"\". `boundary` is the one to watch: omitting it KEEPS the stored polygon, while sending one REPLACES it outright (no partial merge of geometry). This tool cannot remove a polygon once set.  A boundary or postal/city change takes effect for every NEW matching decision (quote checks, confirm, reassign, board moves, slot pickers), including for jobs already on the calendar when they are next re-planned. Jobs already assigned are not re-evaluated automatically, so after moving an edge, re-check listCrewCandidates on upcoming jobs near it.
+         * @summary Adjust a territory\'s details or its boundary
+         * @param {string} id Service Area ID
+         * @param {ServiceAreaUpdateRequest} serviceAreaUpdateRequest Service area details
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updateServiceArea(id: string, serviceAreaUpdateRequest: ServiceAreaUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateServiceArea(id, serviceAreaUpdateRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['ServiceAreaApi.updateServiceArea']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -162,6 +335,26 @@ export const ServiceAreaApiFp = function(configuration?: Configuration) {
 export const ServiceAreaApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = ServiceAreaApiFp(configuration)
     return {
+        /**
+         * Creates a service area: a named region used as a HARD filter when deciding who can take a job. A technician assigned to no area covering the job\'s address is never offered by listNearbyTechnicians, listMatchingSlots or listCrewCandidates, and never auto-assigned at confirm, whatever their skills or availability say.  `name` is the only required field and must be unique (SERVICE_AREA_DUPLICATE_NAME). Coverage is matched two ways: with a `boundary` (GeoJSON polygon), a geocoded address must fall inside the polygon; without one, the area matches addresses by equality on its postal_code, city or district. A polygon is the precise option; the administrative fields are the fallback, and also what matches jobs whose address could not be geocoded. An invalid polygon is refused with SERVICE_AREA_INVALID_BOUNDARY.  Creating the area does not staff it. Assign technicians with replaceTechnicianServiceAreas, or pass `service_area_ids` to createTechnician.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retry does not create a duplicate area.
+         * @summary Define a territory the business serves
+         * @param {ServiceAreaApiCreateServiceAreaRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createServiceArea(requestParameters: ServiceAreaApiCreateServiceAreaRequest, options?: RawAxiosRequestConfig): AxiosPromise<CreateServiceArea200Response> {
+            return localVarFp.createServiceArea(requestParameters.serviceAreaCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Soft-deletes the service area: it disappears from listServiceAreas and stops counting for coverage immediately. Technician assignments to it are left in place but no longer grant coverage.  The consequence is easy to underestimate: technicians whose only coverage was this area become unmatchable for addresses inside it. Jobs already assigned keep their technician, but any re-plan (reassign, board move, confirm of a pending job, the slot picker) can find no feasible crew there. Before deleting, re-check listCrewCandidates on upcoming jobs in that territory.  If you are reshaping coverage rather than withdrawing from it, edit the polygon or postal/city fields with updateServiceArea instead; that keeps the area and its technician assignments working.
+         * @summary Stop serving a territory
+         * @param {ServiceAreaApiDeleteServiceAreaRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteServiceArea(requestParameters: ServiceAreaApiDeleteServiceAreaRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.deleteServiceArea(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
         /**
          * Returns one service area — a geographic coverage zone (service territory) the business operates in, with its name and geometry metadata. Reference its UUID as `service_area_id` on customer records for territory-aware dispatch.
          * @summary Get a service area
@@ -182,8 +375,53 @@ export const ServiceAreaApiFactory = function (configuration?: Configuration, ba
         listServiceAreas(requestParameters: ServiceAreaApiListServiceAreasRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ListServiceAreas200Response> {
             return localVarFp.listServiceAreas(requestParameters.page, requestParameters.limit, options).then((request) => request(axios, basePath));
         },
+        /**
+         * Edits a service area in place, keeping its id and every technician already assigned to it.  Partial update: omit a field to keep it, send \"\" to clear an optional text field; `name` rejects \"\". `boundary` is the one to watch: omitting it KEEPS the stored polygon, while sending one REPLACES it outright (no partial merge of geometry). This tool cannot remove a polygon once set.  A boundary or postal/city change takes effect for every NEW matching decision (quote checks, confirm, reassign, board moves, slot pickers), including for jobs already on the calendar when they are next re-planned. Jobs already assigned are not re-evaluated automatically, so after moving an edge, re-check listCrewCandidates on upcoming jobs near it.
+         * @summary Adjust a territory\'s details or its boundary
+         * @param {ServiceAreaApiUpdateServiceAreaRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateServiceArea(requestParameters: ServiceAreaApiUpdateServiceAreaRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.updateServiceArea(requestParameters.id, requestParameters.serviceAreaUpdateRequest, options).then((request) => request(axios, basePath));
+        },
     };
 };
+
+/**
+ * Request parameters for createServiceArea operation in ServiceAreaApi.
+ * @export
+ * @interface ServiceAreaApiCreateServiceAreaRequest
+ */
+export interface ServiceAreaApiCreateServiceAreaRequest {
+    /**
+     * Service area details
+     * @type {ServiceAreaCreateRequest}
+     * @memberof ServiceAreaApiCreateServiceArea
+     */
+    readonly serviceAreaCreateRequest: ServiceAreaCreateRequest
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+     * @type {string}
+     * @memberof ServiceAreaApiCreateServiceArea
+     */
+    readonly idempotencyKey?: string
+}
+
+/**
+ * Request parameters for deleteServiceArea operation in ServiceAreaApi.
+ * @export
+ * @interface ServiceAreaApiDeleteServiceAreaRequest
+ */
+export interface ServiceAreaApiDeleteServiceAreaRequest {
+    /**
+     * Service Area ID
+     * @type {string}
+     * @memberof ServiceAreaApiDeleteServiceArea
+     */
+    readonly id: string
+}
 
 /**
  * Request parameters for getServiceArea operation in ServiceAreaApi.
@@ -221,12 +459,57 @@ export interface ServiceAreaApiListServiceAreasRequest {
 }
 
 /**
+ * Request parameters for updateServiceArea operation in ServiceAreaApi.
+ * @export
+ * @interface ServiceAreaApiUpdateServiceAreaRequest
+ */
+export interface ServiceAreaApiUpdateServiceAreaRequest {
+    /**
+     * Service Area ID
+     * @type {string}
+     * @memberof ServiceAreaApiUpdateServiceArea
+     */
+    readonly id: string
+
+    /**
+     * Service area details
+     * @type {ServiceAreaUpdateRequest}
+     * @memberof ServiceAreaApiUpdateServiceArea
+     */
+    readonly serviceAreaUpdateRequest: ServiceAreaUpdateRequest
+}
+
+/**
  * ServiceAreaApi - object-oriented interface
  * @export
  * @class ServiceAreaApi
  * @extends {BaseAPI}
  */
 export class ServiceAreaApi extends BaseAPI {
+    /**
+     * Creates a service area: a named region used as a HARD filter when deciding who can take a job. A technician assigned to no area covering the job\'s address is never offered by listNearbyTechnicians, listMatchingSlots or listCrewCandidates, and never auto-assigned at confirm, whatever their skills or availability say.  `name` is the only required field and must be unique (SERVICE_AREA_DUPLICATE_NAME). Coverage is matched two ways: with a `boundary` (GeoJSON polygon), a geocoded address must fall inside the polygon; without one, the area matches addresses by equality on its postal_code, city or district. A polygon is the precise option; the administrative fields are the fallback, and also what matches jobs whose address could not be geocoded. An invalid polygon is refused with SERVICE_AREA_INVALID_BOUNDARY.  Creating the area does not staff it. Assign technicians with replaceTechnicianServiceAreas, or pass `service_area_ids` to createTechnician.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retry does not create a duplicate area.
+     * @summary Define a territory the business serves
+     * @param {ServiceAreaApiCreateServiceAreaRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ServiceAreaApi
+     */
+    public createServiceArea(requestParameters: ServiceAreaApiCreateServiceAreaRequest, options?: RawAxiosRequestConfig) {
+        return ServiceAreaApiFp(this.configuration).createServiceArea(requestParameters.serviceAreaCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Soft-deletes the service area: it disappears from listServiceAreas and stops counting for coverage immediately. Technician assignments to it are left in place but no longer grant coverage.  The consequence is easy to underestimate: technicians whose only coverage was this area become unmatchable for addresses inside it. Jobs already assigned keep their technician, but any re-plan (reassign, board move, confirm of a pending job, the slot picker) can find no feasible crew there. Before deleting, re-check listCrewCandidates on upcoming jobs in that territory.  If you are reshaping coverage rather than withdrawing from it, edit the polygon or postal/city fields with updateServiceArea instead; that keeps the area and its technician assignments working.
+     * @summary Stop serving a territory
+     * @param {ServiceAreaApiDeleteServiceAreaRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ServiceAreaApi
+     */
+    public deleteServiceArea(requestParameters: ServiceAreaApiDeleteServiceAreaRequest, options?: RawAxiosRequestConfig) {
+        return ServiceAreaApiFp(this.configuration).deleteServiceArea(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Returns one service area — a geographic coverage zone (service territory) the business operates in, with its name and geometry metadata. Reference its UUID as `service_area_id` on customer records for territory-aware dispatch.
      * @summary Get a service area
@@ -249,6 +532,18 @@ export class ServiceAreaApi extends BaseAPI {
      */
     public listServiceAreas(requestParameters: ServiceAreaApiListServiceAreasRequest = {}, options?: RawAxiosRequestConfig) {
         return ServiceAreaApiFp(this.configuration).listServiceAreas(requestParameters.page, requestParameters.limit, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Edits a service area in place, keeping its id and every technician already assigned to it.  Partial update: omit a field to keep it, send \"\" to clear an optional text field; `name` rejects \"\". `boundary` is the one to watch: omitting it KEEPS the stored polygon, while sending one REPLACES it outright (no partial merge of geometry). This tool cannot remove a polygon once set.  A boundary or postal/city change takes effect for every NEW matching decision (quote checks, confirm, reassign, board moves, slot pickers), including for jobs already on the calendar when they are next re-planned. Jobs already assigned are not re-evaluated automatically, so after moving an edge, re-check listCrewCandidates on upcoming jobs near it.
+     * @summary Adjust a territory\'s details or its boundary
+     * @param {ServiceAreaApiUpdateServiceAreaRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ServiceAreaApi
+     */
+    public updateServiceArea(requestParameters: ServiceAreaApiUpdateServiceAreaRequest, options?: RawAxiosRequestConfig) {
+        return ServiceAreaApiFp(this.configuration).updateServiceArea(requestParameters.id, requestParameters.serviceAreaUpdateRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

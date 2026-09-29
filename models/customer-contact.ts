@@ -18,10 +18,10 @@
 import type { CustomerAddress } from './customer-address';
 // May contain unused imports in some cases
 // @ts-ignore
-import type { ServiceArea } from './service-area';
+import type { CustomerServiceAreaRef } from './customer-service-area-ref';
 // May contain unused imports in some cases
 // @ts-ignore
-import type { Technician } from './technician';
+import type { CustomerTechnicianRef } from './customer-technician-ref';
 
 /**
  * 
@@ -49,15 +49,27 @@ export interface CustomerContact {
     'phone'?: string;
     /**
      * The technician this customer prefers, if one is set; otherwise null.
-     * @type {Technician}
+     * @type {CustomerTechnicianRef}
      * @memberof CustomerContact
      */
-    'preferred_technician'?: Technician;
+    'preferred_technician'?: CustomerTechnicianRef;
     /**
      * The service area this customer falls in, if resolved; otherwise null.
-     * @type {ServiceArea}
+     * @type {CustomerServiceAreaRef}
      * @memberof CustomerContact
      */
-    'service_area'?: ServiceArea;
+    'service_area'?: CustomerServiceAreaRef;
+    /**
+     * True when the customer has explicitly consented to receive SMS. SMS notifications to this customer are suppressed while false.
+     * @type {boolean}
+     * @memberof CustomerContact
+     */
+    'sms_opt_in'?: boolean;
+    /**
+     * When SMS consent was granted (RFC3339); null when sms_opt_in is false.
+     * @type {string}
+     * @memberof CustomerContact
+     */
+    'sms_opt_in_at'?: string;
 }
 

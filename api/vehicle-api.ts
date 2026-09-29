@@ -22,17 +22,105 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CreateVehicle200Response } from '../models';
+// @ts-ignore
 import type { GetVehicle200Response } from '../models';
 // @ts-ignore
 import type { ListVehicles200Response } from '../models';
 // @ts-ignore
 import type { ResponseEnvelope } from '../models';
+// @ts-ignore
+import type { VehicleCreateRequest } from '../models';
+// @ts-ignore
+import type { VehicleUpdateRequest } from '../models';
 /**
  * VehicleApi - axios parameter creator
  * @export
  */
 export const VehicleApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * Registers a van, truck or car in the business\'s own fleet. Vehicles are what a confirmed job\'s crew travels in: at confirm, Crisphive auto-selects one vehicle for the whole crew from the lead technician\'s vehicles, then from unowned fleet vehicles, and blocks a vehicle already booked for an overlapping job.  `name` is the only required field, so a bulk fleet import needs nothing else; brand, model, year, plate_number, current_mileage and vehicle_type (van, truck or car) can be filled in later with updateVehicle. Names and plate numbers must be unique in the business (VEHICLE_DUPLICATE_NAME / VEHICLE_DUPLICATE_PLATE).  `owner_id` records who has CLAIMED the vehicle as their primary one. The owner must be a lead technician or a management role; a buddy- or float-tier profile is refused with VEHICLE_OWNER_TIER_NOT_ALLOWED, an unknown profile with VEHICLE_INVALID_OWNER. Deciding which vehicles a technician may USE is a separate relation: use replaceTechnicianVehicles for that, not this tool.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retried call replays the original response instead of creating a duplicate vehicle.
+         * @summary Add a vehicle to the fleet
+         * @param {VehicleCreateRequest} vehicleCreateRequest Vehicle details
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createVehicle: async (vehicleCreateRequest: VehicleCreateRequest, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'vehicleCreateRequest' is not null or undefined
+            assertParamExists('createVehicle', 'vehicleCreateRequest', vehicleCreateRequest)
+            const localVarPath = `/vehicles`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(vehicleCreateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Soft-deletes the vehicle and, in the same transaction, removes it from every technician\'s vehicle list. It no longer appears in listVehicles or getVehicle and can no longer be auto-selected for a crew.  Jobs that referenced it keep the stored reference but no longer display an assigned vehicle, and upcoming jobs are NOT given a replacement automatically. Reach for this only when a vehicle leaves the fleet for good (sold, written off, off-lease). For a van that is merely in the workshop, set its `status` to maintenance with updateVehicle instead, so the record stays in the fleet and can be brought straight back.
+         * @summary Retire a vehicle from the fleet
+         * @param {string} id Vehicle ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteVehicle: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('deleteVehicle', 'id', id)
+            const localVarPath = `/vehicles/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * Returns one fleet vehicle (service van/truck): identity, plate, operational status (idle, on job, maintenance) and which technicians use it — the fleet-management view of a single asset.
          * @summary Get a vehicle
@@ -130,6 +218,50 @@ export const VehicleApiAxiosParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Edits an existing fleet record in place; the vehicle id and the technicians who use it are untouched.  Partial update: omit a field to KEEP its current value, send \"\" to CLEAR an optional text field (brand, model, plate_number). Exceptions: `name` rejects \"\" because a vehicle must stay identifiable, and `vehicle_type` (van, truck, car) and `status` (inactive, idle, on_job, maintenance) must be valid enum values when present; an empty string there is a 400. `owner_id`: omit to keep the current owner, \"\" to unclaim, or a UUID to reassign; the new owner must be a lead or management profile (VEHICLE_OWNER_TIER_NOT_ALLOWED otherwise).  Use this for corrections and odometer updates, and set `status` to maintenance or inactive when a vehicle is temporarily out of service so it stays in the fleet. To change which technicians may use it, call replaceTechnicianVehicles; to take it out of the fleet for good, call deleteVehicle.
+         * @summary Change a vehicle\'s details
+         * @param {string} id Vehicle ID
+         * @param {VehicleUpdateRequest} vehicleUpdateRequest Vehicle details
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateVehicle: async (id: string, vehicleUpdateRequest: VehicleUpdateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateVehicle', 'id', id)
+            // verify required parameter 'vehicleUpdateRequest' is not null or undefined
+            assertParamExists('updateVehicle', 'vehicleUpdateRequest', vehicleUpdateRequest)
+            const localVarPath = `/vehicles/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(vehicleUpdateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -140,6 +272,33 @@ export const VehicleApiAxiosParamCreator = function (configuration?: Configurati
 export const VehicleApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = VehicleApiAxiosParamCreator(configuration)
     return {
+        /**
+         * Registers a van, truck or car in the business\'s own fleet. Vehicles are what a confirmed job\'s crew travels in: at confirm, Crisphive auto-selects one vehicle for the whole crew from the lead technician\'s vehicles, then from unowned fleet vehicles, and blocks a vehicle already booked for an overlapping job.  `name` is the only required field, so a bulk fleet import needs nothing else; brand, model, year, plate_number, current_mileage and vehicle_type (van, truck or car) can be filled in later with updateVehicle. Names and plate numbers must be unique in the business (VEHICLE_DUPLICATE_NAME / VEHICLE_DUPLICATE_PLATE).  `owner_id` records who has CLAIMED the vehicle as their primary one. The owner must be a lead technician or a management role; a buddy- or float-tier profile is refused with VEHICLE_OWNER_TIER_NOT_ALLOWED, an unknown profile with VEHICLE_INVALID_OWNER. Deciding which vehicles a technician may USE is a separate relation: use replaceTechnicianVehicles for that, not this tool.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retried call replays the original response instead of creating a duplicate vehicle.
+         * @summary Add a vehicle to the fleet
+         * @param {VehicleCreateRequest} vehicleCreateRequest Vehicle details
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createVehicle(vehicleCreateRequest: VehicleCreateRequest, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateVehicle200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createVehicle(vehicleCreateRequest, idempotencyKey, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['VehicleApi.createVehicle']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Soft-deletes the vehicle and, in the same transaction, removes it from every technician\'s vehicle list. It no longer appears in listVehicles or getVehicle and can no longer be auto-selected for a crew.  Jobs that referenced it keep the stored reference but no longer display an assigned vehicle, and upcoming jobs are NOT given a replacement automatically. Reach for this only when a vehicle leaves the fleet for good (sold, written off, off-lease). For a van that is merely in the workshop, set its `status` to maintenance with updateVehicle instead, so the record stays in the fleet and can be brought straight back.
+         * @summary Retire a vehicle from the fleet
+         * @param {string} id Vehicle ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteVehicle(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteVehicle(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['VehicleApi.deleteVehicle']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
         /**
          * Returns one fleet vehicle (service van/truck): identity, plate, operational status (idle, on job, maintenance) and which technicians use it — the fleet-management view of a single asset.
          * @summary Get a vehicle
@@ -170,6 +329,20 @@ export const VehicleApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['VehicleApi.listVehicles']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Edits an existing fleet record in place; the vehicle id and the technicians who use it are untouched.  Partial update: omit a field to KEEP its current value, send \"\" to CLEAR an optional text field (brand, model, plate_number). Exceptions: `name` rejects \"\" because a vehicle must stay identifiable, and `vehicle_type` (van, truck, car) and `status` (inactive, idle, on_job, maintenance) must be valid enum values when present; an empty string there is a 400. `owner_id`: omit to keep the current owner, \"\" to unclaim, or a UUID to reassign; the new owner must be a lead or management profile (VEHICLE_OWNER_TIER_NOT_ALLOWED otherwise).  Use this for corrections and odometer updates, and set `status` to maintenance or inactive when a vehicle is temporarily out of service so it stays in the fleet. To change which technicians may use it, call replaceTechnicianVehicles; to take it out of the fleet for good, call deleteVehicle.
+         * @summary Change a vehicle\'s details
+         * @param {string} id Vehicle ID
+         * @param {VehicleUpdateRequest} vehicleUpdateRequest Vehicle details
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updateVehicle(id: string, vehicleUpdateRequest: VehicleUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateVehicle(id, vehicleUpdateRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['VehicleApi.updateVehicle']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -180,6 +353,26 @@ export const VehicleApiFp = function(configuration?: Configuration) {
 export const VehicleApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = VehicleApiFp(configuration)
     return {
+        /**
+         * Registers a van, truck or car in the business\'s own fleet. Vehicles are what a confirmed job\'s crew travels in: at confirm, Crisphive auto-selects one vehicle for the whole crew from the lead technician\'s vehicles, then from unowned fleet vehicles, and blocks a vehicle already booked for an overlapping job.  `name` is the only required field, so a bulk fleet import needs nothing else; brand, model, year, plate_number, current_mileage and vehicle_type (van, truck or car) can be filled in later with updateVehicle. Names and plate numbers must be unique in the business (VEHICLE_DUPLICATE_NAME / VEHICLE_DUPLICATE_PLATE).  `owner_id` records who has CLAIMED the vehicle as their primary one. The owner must be a lead technician or a management role; a buddy- or float-tier profile is refused with VEHICLE_OWNER_TIER_NOT_ALLOWED, an unknown profile with VEHICLE_INVALID_OWNER. Deciding which vehicles a technician may USE is a separate relation: use replaceTechnicianVehicles for that, not this tool.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retried call replays the original response instead of creating a duplicate vehicle.
+         * @summary Add a vehicle to the fleet
+         * @param {VehicleApiCreateVehicleRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createVehicle(requestParameters: VehicleApiCreateVehicleRequest, options?: RawAxiosRequestConfig): AxiosPromise<CreateVehicle200Response> {
+            return localVarFp.createVehicle(requestParameters.vehicleCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Soft-deletes the vehicle and, in the same transaction, removes it from every technician\'s vehicle list. It no longer appears in listVehicles or getVehicle and can no longer be auto-selected for a crew.  Jobs that referenced it keep the stored reference but no longer display an assigned vehicle, and upcoming jobs are NOT given a replacement automatically. Reach for this only when a vehicle leaves the fleet for good (sold, written off, off-lease). For a van that is merely in the workshop, set its `status` to maintenance with updateVehicle instead, so the record stays in the fleet and can be brought straight back.
+         * @summary Retire a vehicle from the fleet
+         * @param {VehicleApiDeleteVehicleRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteVehicle(requestParameters: VehicleApiDeleteVehicleRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.deleteVehicle(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
         /**
          * Returns one fleet vehicle (service van/truck): identity, plate, operational status (idle, on job, maintenance) and which technicians use it — the fleet-management view of a single asset.
          * @summary Get a vehicle
@@ -200,8 +393,53 @@ export const VehicleApiFactory = function (configuration?: Configuration, basePa
         listVehicles(requestParameters: VehicleApiListVehiclesRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ListVehicles200Response> {
             return localVarFp.listVehicles(requestParameters.page, requestParameters.limit, requestParameters.status, requestParameters.keyword, requestParameters.since, options).then((request) => request(axios, basePath));
         },
+        /**
+         * Edits an existing fleet record in place; the vehicle id and the technicians who use it are untouched.  Partial update: omit a field to KEEP its current value, send \"\" to CLEAR an optional text field (brand, model, plate_number). Exceptions: `name` rejects \"\" because a vehicle must stay identifiable, and `vehicle_type` (van, truck, car) and `status` (inactive, idle, on_job, maintenance) must be valid enum values when present; an empty string there is a 400. `owner_id`: omit to keep the current owner, \"\" to unclaim, or a UUID to reassign; the new owner must be a lead or management profile (VEHICLE_OWNER_TIER_NOT_ALLOWED otherwise).  Use this for corrections and odometer updates, and set `status` to maintenance or inactive when a vehicle is temporarily out of service so it stays in the fleet. To change which technicians may use it, call replaceTechnicianVehicles; to take it out of the fleet for good, call deleteVehicle.
+         * @summary Change a vehicle\'s details
+         * @param {VehicleApiUpdateVehicleRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateVehicle(requestParameters: VehicleApiUpdateVehicleRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.updateVehicle(requestParameters.id, requestParameters.vehicleUpdateRequest, options).then((request) => request(axios, basePath));
+        },
     };
 };
+
+/**
+ * Request parameters for createVehicle operation in VehicleApi.
+ * @export
+ * @interface VehicleApiCreateVehicleRequest
+ */
+export interface VehicleApiCreateVehicleRequest {
+    /**
+     * Vehicle details
+     * @type {VehicleCreateRequest}
+     * @memberof VehicleApiCreateVehicle
+     */
+    readonly vehicleCreateRequest: VehicleCreateRequest
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+     * @type {string}
+     * @memberof VehicleApiCreateVehicle
+     */
+    readonly idempotencyKey?: string
+}
+
+/**
+ * Request parameters for deleteVehicle operation in VehicleApi.
+ * @export
+ * @interface VehicleApiDeleteVehicleRequest
+ */
+export interface VehicleApiDeleteVehicleRequest {
+    /**
+     * Vehicle ID
+     * @type {string}
+     * @memberof VehicleApiDeleteVehicle
+     */
+    readonly id: string
+}
 
 /**
  * Request parameters for getVehicle operation in VehicleApi.
@@ -260,12 +498,57 @@ export interface VehicleApiListVehiclesRequest {
 }
 
 /**
+ * Request parameters for updateVehicle operation in VehicleApi.
+ * @export
+ * @interface VehicleApiUpdateVehicleRequest
+ */
+export interface VehicleApiUpdateVehicleRequest {
+    /**
+     * Vehicle ID
+     * @type {string}
+     * @memberof VehicleApiUpdateVehicle
+     */
+    readonly id: string
+
+    /**
+     * Vehicle details
+     * @type {VehicleUpdateRequest}
+     * @memberof VehicleApiUpdateVehicle
+     */
+    readonly vehicleUpdateRequest: VehicleUpdateRequest
+}
+
+/**
  * VehicleApi - object-oriented interface
  * @export
  * @class VehicleApi
  * @extends {BaseAPI}
  */
 export class VehicleApi extends BaseAPI {
+    /**
+     * Registers a van, truck or car in the business\'s own fleet. Vehicles are what a confirmed job\'s crew travels in: at confirm, Crisphive auto-selects one vehicle for the whole crew from the lead technician\'s vehicles, then from unowned fleet vehicles, and blocks a vehicle already booked for an overlapping job.  `name` is the only required field, so a bulk fleet import needs nothing else; brand, model, year, plate_number, current_mileage and vehicle_type (van, truck or car) can be filled in later with updateVehicle. Names and plate numbers must be unique in the business (VEHICLE_DUPLICATE_NAME / VEHICLE_DUPLICATE_PLATE).  `owner_id` records who has CLAIMED the vehicle as their primary one. The owner must be a lead technician or a management role; a buddy- or float-tier profile is refused with VEHICLE_OWNER_TIER_NOT_ALLOWED, an unknown profile with VEHICLE_INVALID_OWNER. Deciding which vehicles a technician may USE is a separate relation: use replaceTechnicianVehicles for that, not this tool.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retried call replays the original response instead of creating a duplicate vehicle.
+     * @summary Add a vehicle to the fleet
+     * @param {VehicleApiCreateVehicleRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VehicleApi
+     */
+    public createVehicle(requestParameters: VehicleApiCreateVehicleRequest, options?: RawAxiosRequestConfig) {
+        return VehicleApiFp(this.configuration).createVehicle(requestParameters.vehicleCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Soft-deletes the vehicle and, in the same transaction, removes it from every technician\'s vehicle list. It no longer appears in listVehicles or getVehicle and can no longer be auto-selected for a crew.  Jobs that referenced it keep the stored reference but no longer display an assigned vehicle, and upcoming jobs are NOT given a replacement automatically. Reach for this only when a vehicle leaves the fleet for good (sold, written off, off-lease). For a van that is merely in the workshop, set its `status` to maintenance with updateVehicle instead, so the record stays in the fleet and can be brought straight back.
+     * @summary Retire a vehicle from the fleet
+     * @param {VehicleApiDeleteVehicleRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VehicleApi
+     */
+    public deleteVehicle(requestParameters: VehicleApiDeleteVehicleRequest, options?: RawAxiosRequestConfig) {
+        return VehicleApiFp(this.configuration).deleteVehicle(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Returns one fleet vehicle (service van/truck): identity, plate, operational status (idle, on job, maintenance) and which technicians use it — the fleet-management view of a single asset.
      * @summary Get a vehicle
@@ -288,6 +571,18 @@ export class VehicleApi extends BaseAPI {
      */
     public listVehicles(requestParameters: VehicleApiListVehiclesRequest = {}, options?: RawAxiosRequestConfig) {
         return VehicleApiFp(this.configuration).listVehicles(requestParameters.page, requestParameters.limit, requestParameters.status, requestParameters.keyword, requestParameters.since, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Edits an existing fleet record in place; the vehicle id and the technicians who use it are untouched.  Partial update: omit a field to KEEP its current value, send \"\" to CLEAR an optional text field (brand, model, plate_number). Exceptions: `name` rejects \"\" because a vehicle must stay identifiable, and `vehicle_type` (van, truck, car) and `status` (inactive, idle, on_job, maintenance) must be valid enum values when present; an empty string there is a 400. `owner_id`: omit to keep the current owner, \"\" to unclaim, or a UUID to reassign; the new owner must be a lead or management profile (VEHICLE_OWNER_TIER_NOT_ALLOWED otherwise).  Use this for corrections and odometer updates, and set `status` to maintenance or inactive when a vehicle is temporarily out of service so it stays in the fleet. To change which technicians may use it, call replaceTechnicianVehicles; to take it out of the fleet for good, call deleteVehicle.
+     * @summary Change a vehicle\'s details
+     * @param {VehicleApiUpdateVehicleRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof VehicleApi
+     */
+    public updateVehicle(requestParameters: VehicleApiUpdateVehicleRequest, options?: RawAxiosRequestConfig) {
+        return VehicleApiFp(this.configuration).updateVehicle(requestParameters.id, requestParameters.vehicleUpdateRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

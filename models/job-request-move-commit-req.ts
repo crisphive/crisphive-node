@@ -21,6 +21,12 @@
  */
 export interface JobRequestMoveCommitReq {
     /**
+     * AfterHoursOverride — drop the non-working-day rejection for a P0 whose technician the coordinator has already phoned. P0 only (JOB_REQUEST_AFTER_HOURS_REQUIRES_P0 otherwise), and the preview then carries an AFTER_HOURS warning. Commit must repeat what the preview was run with.
+     * @type {boolean}
+     * @memberof JobRequestMoveCommitReq
+     */
+    'after_hours_override'?: boolean;
+    /**
      * ExpectedMemberIDs — crew moves only: the FULL member set the preview staffed (echo data.members[].technician_id). If the commit\'s re-plan would staff a DIFFERENT set (a previewed replacement got booked in the meantime), the commit is rejected with SCHEDULE_MOVE_PLAN_DRIFTED — crew swaps are never approved unseen. Omit to opt out.
      * @type {Array<string>}
      * @memberof JobRequestMoveCommitReq

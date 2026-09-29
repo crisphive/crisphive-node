@@ -35,7 +35,8 @@ export interface JobRequestAttentionSummary {
 }
 
 export const JobRequestAttentionSummaryReasonEnum = {
-    AssignmentBroken: 'assignment_broken'
+    AssignmentBroken: 'assignment_broken',
+    CalendarConflict: 'calendar_conflict'
 } as const;
 
 export type JobRequestAttentionSummaryReasonEnum = typeof JobRequestAttentionSummaryReasonEnum[keyof typeof JobRequestAttentionSummaryReasonEnum];

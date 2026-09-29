@@ -21,6 +21,12 @@
  */
 export interface JobRequestMovePreviewReq {
     /**
+     * AfterHoursOverride — drop the non-working-day rejection for a P0 whose technician the coordinator has already phoned. P0 only (JOB_REQUEST_AFTER_HOURS_REQUIRES_P0 otherwise), and the preview then carries an AFTER_HOURS warning. Commit must repeat what the preview was run with.
+     * @type {boolean}
+     * @memberof JobRequestMovePreviewReq
+     */
+    'after_hours_override'?: boolean;
+    /**
      * Cascade mode for displaced jobs: overtime = stay same-day (tech works late); next_day = overflow rolls to the next working day.
      * @type {string}
      * @memberof JobRequestMovePreviewReq

@@ -78,7 +78,13 @@ export interface TechnicianCreateRequest {
      */
     'lead_ids'?: Array<string>;
     /**
-     * At least one of phone/email is required (identity resolution key).
+     * Whether to send the new member the \"you have been added to {business}\" message (email when an email was supplied, SMS when a phone was, both when both). Omitted or true sends it; false stays silent. Set false for bulk imports so seeding a roster does not text everybody at once.
+     * @type {boolean}
+     * @memberof TechnicianCreateRequest
+     */
+    'notify'?: boolean;
+    /**
+     * Phone number in E.164 international format: a leading `+` and the country code, e.g. `+16135550188`. A bare national number (`6135550188`) is REJECTED with PHONE_INVALID — there is no default region to guess the country from. At least one of phone/email is required (identity resolution key).
      * @type {string}
      * @memberof TechnicianCreateRequest
      */

@@ -18,6 +18,9 @@
 import type { JobRequestMoveWarning } from './job-request-move-warning';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { JobRequestReassignFallback } from './job-request-reassign-fallback';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { JobRequestRescheduleDay } from './job-request-reschedule-day';
 // May contain unused imports in some cases
 // @ts-ignore
@@ -66,6 +69,12 @@ export interface JobRequestEmergencyPlan {
      */
     'mode'?: JobRequestEmergencyPlanModeEnum;
     /**
+     * ReassignFallbacks: one entry per displaced job that reassign mode could NOT re-staff, and therefore left in days[].moves[] to be rescheduled. Empty in reschedule mode. Read this INSTEAD of inferring \"nobody was free\" from an empty reassignments[] — the two are different states (no fallbacks + empty reassignments means nothing was displaced at all).
+     * @type {Array<JobRequestReassignFallback>}
+     * @memberof JobRequestEmergencyPlan
+     */
+    'reassign_fallbacks'?: Array<JobRequestReassignFallback>;
+    /**
      * Displaced jobs handed to an ALTERNATE technician at their original window (displacement_mode=reassign; empty otherwise). Jobs that could not be re-staffed remain in days/total_moves (reschedule fallback).
      * @type {Array<JobRequestRescheduleReassignment>}
      * @memberof JobRequestEmergencyPlan
@@ -84,7 +93,7 @@ export interface JobRequestEmergencyPlan {
      */
     'total_moves'?: number;
     /**
-     * Non-blocking consequences the coordinator accepts by committing (TIME_OFF_OVERLAP per displaced job landing in the tech\'s approved leave).
+     * Non-blocking consequences the coordinator accepts by committing (TIME_OFF_OVERLAP per displaced job landing in the tech\'s approved leave, CALENDAR_OVERLAP per displaced job landing on a personal calendar event).
      * @type {Array<JobRequestMoveWarning>}
      * @memberof JobRequestEmergencyPlan
      */

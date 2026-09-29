@@ -33,13 +33,37 @@ export interface JobType {
      */
     'created_at'?: string;
     /**
+     * Default demobilization minutes applied with the default duration. Absent = none.
+     * @type {number}
+     * @memberof JobType
+     */
+    'default_demobilization_minutes'?: number;
+    /**
+     * Default work duration in minutes used when a quote omits job_duration_minutes. Absent = no default: a quote for this type must send a duration.
+     * @type {number}
+     * @memberof JobType
+     */
+    'default_duration_minutes'?: number;
+    /**
+     * Default mobilization minutes applied with the default duration. Absent = none.
+     * @type {number}
+     * @memberof JobType
+     */
+    'default_mobilization_minutes'?: number;
+    /**
      * Job type UUID — the stable identifier used in every job-type endpoint.
      * @type {string}
      * @memberof JobType
      */
     'id'?: string;
     /**
-     * True for platform-seeded system rows, which cannot be modified or deleted.
+     * True for the business\'s DEFAULT job type (the seeded \"General\"): a job booked without a job_type_id gets it, and a job with no job type is quoted from its default bundle. It cannot be deleted or deactivated and its default duration cannot be cleared (it can be changed). Exactly one per business per environment (live and sandbox each have their own).
+     * @type {boolean}
+     * @memberof JobType
+     */
+    'is_default'?: boolean;
+    /**
+     * True for platform-seeded system rows: their name and status cannot be modified and they cannot be deleted; their default quote bundle is editable.
      * @type {boolean}
      * @memberof JobType
      */

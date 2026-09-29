@@ -36,11 +36,17 @@ export interface JobRequestQuoteRequest {
      */
     'demobilization_minutes'?: number;
     /**
-     * Hands-on work duration in minutes (man-minutes for a crew job). Required, min 1.
+     * Schedule the job even when no technician can take it in ANY window the customer asked for (outside working hours, outside every service area, nobody free). Without it that case answers 409 JOB_REQUEST_QUOTE_NOT_SCHEDULABLE with the reason, so the coordinator can agree a different time with the customer first. Send true only after that conversation; the override is recorded in the activity feed.
+     * @type {boolean}
+     * @memberof JobRequestQuoteRequest
+     */
+    'force'?: boolean;
+    /**
+     * Hands-on work duration in minutes (man-minutes for a crew job), min 1. On POST /quote it may be OMITTED when the job\'s job type carries a default_duration_minutes: the quote then uses the type\'s default duration and its default buffers (a buffer you send still wins). No duration and no default answers 400 JOB_REQUEST_QUOTE_INVALID. PATCH /quote always requires it.
      * @type {number}
      * @memberof JobRequestQuoteRequest
      */
-    'job_duration_minutes': number;
+    'job_duration_minutes'?: number;
     /**
      * Mobilization (setup/travel-prep) minutes added before the work. Optional, min 0.
      * @type {number}

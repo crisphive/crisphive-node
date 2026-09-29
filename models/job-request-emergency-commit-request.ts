@@ -21,6 +21,12 @@
  */
 export interface JobRequestEmergencyCommitRequest {
     /**
+     * Place this P0 outside working hours / approved time-off — you have phoned the technician and they agreed. Drops the non-working-day rejection; the response then carries an AFTER_HOURS warning. Double-booking, service area, required skills and the lead-tier rule still reject.
+     * @type {boolean}
+     * @memberof JobRequestEmergencyCommitRequest
+     */
+    'after_hours_override'?: boolean;
+    /**
      * Fate of displaced jobs: reschedule (default) or reassign — must match the preview.
      * @type {string}
      * @memberof JobRequestEmergencyCommitRequest

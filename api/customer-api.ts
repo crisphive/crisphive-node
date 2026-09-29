@@ -162,7 +162,8 @@ export const CustomerApiAxiosParamCreator = function (configuration?: Configurat
         /**
          * Returns a paginated, searchable directory of the business\'s customer records — the customer database (CRM) behind every booking and work order. Supports the `since`/`next_since` cursor for incremental sync into an external CRM, ERP or marketing tool.
          * @summary List customers
-         * @param {string} [q] Search name, UID, phone, email
+         * @param {string} [q] Fuzzy search over name, UID, phone, email
+         * @param {string} [phone] EXACT caller lookup by phone in E.164 with the leading + (e.g. +16135550188). Separators are stripped, so \&#39;+1 (613) 555-0188\&#39; works; a bare national number without a country code is refused with PHONE_INVALID. Use this rather than q to identify a caller — q is a substring match and can return the wrong person.
          * @param {Array<string>} [tier] Filter by tier: regular|vip (repeatable)
          * @param {string} [status] Filter by status: active|inactive
          * @param {string} [preferredTechnicianId] Filter by preferred technician UUID
@@ -173,7 +174,7 @@ export const CustomerApiAxiosParamCreator = function (configuration?: Configurat
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        listCustomers: async (q?: string, tier?: Array<string>, status?: string, preferredTechnicianId?: string, sort?: string, page?: number, limit?: number, since?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+        listCustomers: async (q?: string, phone?: string, tier?: Array<string>, status?: string, preferredTechnicianId?: string, sort?: string, page?: number, limit?: number, since?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
             const localVarPath = `/customers`;
             // use dummy base URL string because the URL constructor only accepts absolute URLs.
             const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
@@ -192,6 +193,10 @@ export const CustomerApiAxiosParamCreator = function (configuration?: Configurat
 
             if (q !== undefined) {
                 localVarQueryParameter['q'] = q;
+            }
+
+            if (phone !== undefined) {
+                localVarQueryParameter['phone'] = phone;
             }
 
             if (tier) {
@@ -234,7 +239,7 @@ export const CustomerApiAxiosParamCreator = function (configuration?: Configurat
             };
         },
         /**
-         * Replaces mutable fields on a customer record — two-way CRM sync friendly (push changes from your system of record). Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
+         * PARTIAL update — send only the fields you are changing; anything you OMIT is left exactly as stored (two-way CRM sync friendly: push one field from your system of record without re-sending the record). To CLEAR a field, send it as an empty string: uid, phone, email, notes, preferred_technician_id, service_area_id. `tier` and `status` are enums with no empty member, so an empty value there is ignored rather than stored. `full_name` cannot be set to empty. The nested `address` object is all-or-nothing: omit it to leave the stored address (and its coordinates) untouched; when present it REPLACES the whole block, and missing latitude/longitude are geocoded from the address. A customer must keep at least one contact channel — an update that would clear both phone and email is refused with PHONE_OR_EMAIL_REQUIRED.
          * @summary Update a customer
          * @param {string} id Customer ID (UUID)
          * @param {CustomerUpdateRequest} customerUpdateRequest Fields to update
@@ -330,7 +335,8 @@ export const CustomerApiFp = function(configuration?: Configuration) {
         /**
          * Returns a paginated, searchable directory of the business\'s customer records — the customer database (CRM) behind every booking and work order. Supports the `since`/`next_since` cursor for incremental sync into an external CRM, ERP or marketing tool.
          * @summary List customers
-         * @param {string} [q] Search name, UID, phone, email
+         * @param {string} [q] Fuzzy search over name, UID, phone, email
+         * @param {string} [phone] EXACT caller lookup by phone in E.164 with the leading + (e.g. +16135550188). Separators are stripped, so \&#39;+1 (613) 555-0188\&#39; works; a bare national number without a country code is refused with PHONE_INVALID. Use this rather than q to identify a caller — q is a substring match and can return the wrong person.
          * @param {Array<string>} [tier] Filter by tier: regular|vip (repeatable)
          * @param {string} [status] Filter by status: active|inactive
          * @param {string} [preferredTechnicianId] Filter by preferred technician UUID
@@ -341,14 +347,14 @@ export const CustomerApiFp = function(configuration?: Configuration) {
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        async listCustomers(q?: string, tier?: Array<string>, status?: string, preferredTechnicianId?: string, sort?: string, page?: number, limit?: number, since?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListCustomers200Response>> {
-            const localVarAxiosArgs = await localVarAxiosParamCreator.listCustomers(q, tier, status, preferredTechnicianId, sort, page, limit, since, options);
+        async listCustomers(q?: string, phone?: string, tier?: Array<string>, status?: string, preferredTechnicianId?: string, sort?: string, page?: number, limit?: number, since?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ListCustomers200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.listCustomers(q, phone, tier, status, preferredTechnicianId, sort, page, limit, since, options);
             const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
             const localVarOperationServerBasePath = operationServerMap['CustomerApi.listCustomers']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
-         * Replaces mutable fields on a customer record — two-way CRM sync friendly (push changes from your system of record). Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
+         * PARTIAL update — send only the fields you are changing; anything you OMIT is left exactly as stored (two-way CRM sync friendly: push one field from your system of record without re-sending the record). To CLEAR a field, send it as an empty string: uid, phone, email, notes, preferred_technician_id, service_area_id. `tier` and `status` are enums with no empty member, so an empty value there is ignored rather than stored. `full_name` cannot be set to empty. The nested `address` object is all-or-nothing: omit it to leave the stored address (and its coordinates) untouched; when present it REPLACES the whole block, and missing latitude/longitude are geocoded from the address. A customer must keep at least one contact channel — an update that would clear both phone and email is refused with PHONE_OR_EMAIL_REQUIRED.
          * @summary Update a customer
          * @param {string} id Customer ID (UUID)
          * @param {CustomerUpdateRequest} customerUpdateRequest Fields to update
@@ -409,10 +415,10 @@ export const CustomerApiFactory = function (configuration?: Configuration, baseP
          * @throws {RequiredError}
          */
         listCustomers(requestParameters: CustomerApiListCustomersRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ListCustomers200Response> {
-            return localVarFp.listCustomers(requestParameters.q, requestParameters.tier, requestParameters.status, requestParameters.preferredTechnicianId, requestParameters.sort, requestParameters.page, requestParameters.limit, requestParameters.since, options).then((request) => request(axios, basePath));
+            return localVarFp.listCustomers(requestParameters.q, requestParameters.phone, requestParameters.tier, requestParameters.status, requestParameters.preferredTechnicianId, requestParameters.sort, requestParameters.page, requestParameters.limit, requestParameters.since, options).then((request) => request(axios, basePath));
         },
         /**
-         * Replaces mutable fields on a customer record — two-way CRM sync friendly (push changes from your system of record). Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
+         * PARTIAL update — send only the fields you are changing; anything you OMIT is left exactly as stored (two-way CRM sync friendly: push one field from your system of record without re-sending the record). To CLEAR a field, send it as an empty string: uid, phone, email, notes, preferred_technician_id, service_area_id. `tier` and `status` are enums with no empty member, so an empty value there is ignored rather than stored. `full_name` cannot be set to empty. The nested `address` object is all-or-nothing: omit it to leave the stored address (and its coordinates) untouched; when present it REPLACES the whole block, and missing latitude/longitude are geocoded from the address. A customer must keep at least one contact channel — an update that would clear both phone and email is refused with PHONE_OR_EMAIL_REQUIRED.
          * @summary Update a customer
          * @param {CustomerApiUpdateCustomerRequest} requestParameters Request parameters.
          * @param {*} [options] Override http request option.
@@ -480,11 +486,18 @@ export interface CustomerApiGetCustomerRequest {
  */
 export interface CustomerApiListCustomersRequest {
     /**
-     * Search name, UID, phone, email
+     * Fuzzy search over name, UID, phone, email
      * @type {string}
      * @memberof CustomerApiListCustomers
      */
     readonly q?: string
+
+    /**
+     * EXACT caller lookup by phone in E.164 with the leading + (e.g. +16135550188). Separators are stripped, so \&#39;+1 (613) 555-0188\&#39; works; a bare national number without a country code is refused with PHONE_INVALID. Use this rather than q to identify a caller — q is a substring match and can return the wrong person.
+     * @type {string}
+     * @memberof CustomerApiListCustomers
+     */
+    readonly phone?: string
 
     /**
      * Filter by tier: regular|vip (repeatable)
@@ -609,11 +622,11 @@ export class CustomerApi extends BaseAPI {
      * @memberof CustomerApi
      */
     public listCustomers(requestParameters: CustomerApiListCustomersRequest = {}, options?: RawAxiosRequestConfig) {
-        return CustomerApiFp(this.configuration).listCustomers(requestParameters.q, requestParameters.tier, requestParameters.status, requestParameters.preferredTechnicianId, requestParameters.sort, requestParameters.page, requestParameters.limit, requestParameters.since, options).then((request) => request(this.axios, this.basePath));
+        return CustomerApiFp(this.configuration).listCustomers(requestParameters.q, requestParameters.phone, requestParameters.tier, requestParameters.status, requestParameters.preferredTechnicianId, requestParameters.sort, requestParameters.page, requestParameters.limit, requestParameters.since, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**
-     * Replaces mutable fields on a customer record — two-way CRM sync friendly (push changes from your system of record). Pass service_area_id=\"\" to clear the service area. Address fields (including latitude/longitude) live under the nested `address` object.
+     * PARTIAL update — send only the fields you are changing; anything you OMIT is left exactly as stored (two-way CRM sync friendly: push one field from your system of record without re-sending the record). To CLEAR a field, send it as an empty string: uid, phone, email, notes, preferred_technician_id, service_area_id. `tier` and `status` are enums with no empty member, so an empty value there is ignored rather than stored. `full_name` cannot be set to empty. The nested `address` object is all-or-nothing: omit it to leave the stored address (and its coordinates) untouched; when present it REPLACES the whole block, and missing latitude/longitude are geocoded from the address. A customer must keep at least one contact channel — an update that would clear both phone and email is refused with PHONE_OR_EMAIL_REQUIRED.
      * @summary Update a customer
      * @param {CustomerApiUpdateCustomerRequest} requestParameters Request parameters.
      * @param {*} [options] Override http request option.

@@ -24,61 +24,67 @@ import type { CustomerAddressRequest } from './customer-address-request';
  */
 export interface CustomerUpdateRequest {
     /**
-     * Postal address and coordinates.
+     * Postal address and coordinates. Omit the whole object to leave the stored address untouched; when present it REPLACES the address block.
      * @type {CustomerAddressRequest}
      * @memberof CustomerUpdateRequest
      */
     'address'?: CustomerAddressRequest;
     /**
-     * Email address.
+     * Email address. Omit to leave unchanged, \"\" to clear.
      * @type {string}
      * @memberof CustomerUpdateRequest
      */
     'email'?: string;
     /**
-     * Customer\'s full name. Required; max 255 chars.
+     * Customer\'s full name. Omit to leave unchanged; an empty or blank value is ignored (a customer cannot be left nameless). Max 255 chars.
      * @type {string}
      * @memberof CustomerUpdateRequest
      */
-    'full_name': string;
+    'full_name'?: string;
     /**
-     * Free-form internal notes about the customer; max 4000 chars.
+     * Free-form internal notes about the customer. Omit to leave unchanged, \"\" to clear; max 4000 chars.
      * @type {string}
      * @memberof CustomerUpdateRequest
      */
     'notes'?: string;
     /**
-     * Phone number. 10–20 chars.
+     * Phone number in E.164 international format (`+16135550188`); a bare national number is rejected with PHONE_INVALID — see createCustomerReq.Phone. Omit to leave unchanged, \"\" to clear. 10–20 chars.
      * @type {string}
      * @memberof CustomerUpdateRequest
      */
     'phone'?: string;
     /**
-     * UUID of the technician this customer prefers. Must belong to this business.
+     * UUID of the technician this customer prefers. Omit to leave unchanged, \"\" to clear. Must belong to this business.
      * @type {string}
      * @memberof CustomerUpdateRequest
      */
     'preferred_technician_id'?: string;
     /**
-     * UUID of the service area for this customer. Must belong to this business.
+     * UUID of the service area for this customer. Omit to leave unchanged, \"\" to clear. Must belong to this business.
      * @type {string}
      * @memberof CustomerUpdateRequest
      */
     'service_area_id'?: string;
     /**
-     * Lifecycle status.
+     * SMS consent, tri-state: omit/null = leave unchanged; true = grant (only when the customer explicitly consented — the original consent timestamp is preserved); false = revoke (opt-out, stops SMS immediately).
+     * @type {boolean}
+     * @memberof CustomerUpdateRequest
+     */
+    'sms_opt_in'?: boolean;
+    /**
+     * Lifecycle status. Omit to leave unchanged; \"\" is ignored.
      * @type {string}
      * @memberof CustomerUpdateRequest
      */
     'status'?: CustomerUpdateRequestStatusEnum;
     /**
-     * Loyalty tier.
+     * Loyalty tier. Omit to leave unchanged; \"\" is ignored (an enum has no empty member).
      * @type {string}
      * @memberof CustomerUpdateRequest
      */
     'tier'?: CustomerUpdateRequestTierEnum;
     /**
-     * Your external reference for this customer. Optional; max 32 chars.
+     * Your external reference for this customer. Omit to leave unchanged, \"\" to clear. Max 32 chars.
      * @type {string}
      * @memberof CustomerUpdateRequest
      */

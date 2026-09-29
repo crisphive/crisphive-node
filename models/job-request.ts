@@ -159,6 +159,12 @@ export interface JobRequest {
      */
     'description'?: string;
     /**
+     * Driving distance from the technician\'s start location to the job site, in kilometres. Detail reads only — omitted when unknown. Named _km to match distance_km on the nearby-technician and emergency-candidate DTOs.
+     * @type {number}
+     * @memberof JobRequest
+     */
+    'distance_km'?: number;
+    /**
      * Job request UUID.
      * @type {string}
      * @memberof JobRequest

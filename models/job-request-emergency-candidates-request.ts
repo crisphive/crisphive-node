@@ -21,6 +21,12 @@
  */
 export interface JobRequestEmergencyCandidatesRequest {
     /**
+     * Place this P0 outside working hours / approved time-off — you have phoned the technician and they agreed. Drops the non-working-day rejection; the response then carries an AFTER_HOURS warning. Double-booking, service area, required skills and the lead-tier rule still reject.
+     * @type {boolean}
+     * @memberof JobRequestEmergencyCandidatesRequest
+     */
+    'after_hours_override'?: boolean;
+    /**
      * ID of the P0 job to place.
      * @type {string}
      * @memberof JobRequestEmergencyCandidatesRequest
@@ -39,7 +45,7 @@ export interface JobRequestEmergencyCandidatesRequest {
      */
     'mode': JobRequestEmergencyCandidatesRequestModeEnum;
     /**
-     * Desired start — business-local naive datetime, no offset. Must be in the future.
+     * Desired start — business-local wall clock. Seconds may be omitted and a space may replace the T; an offset is accepted only when it agrees with the business timezone (a disagreeing one is refused with JOB_REQUEST_INVALID_INPUT rather than guessed). Must be in the future.
      * @type {string}
      * @memberof JobRequestEmergencyCandidatesRequest
      */

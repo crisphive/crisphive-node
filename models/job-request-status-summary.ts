@@ -21,7 +21,7 @@
  */
 export interface JobRequestStatusSummary {
     /**
-     * Status display name, resolved to the request locale.
+     * Status display name as authored on the workflow (canonical; NOT resolved to the request locale).
      * @type {string}
      * @memberof JobRequestStatusSummary
      */

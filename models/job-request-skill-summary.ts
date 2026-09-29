@@ -45,7 +45,7 @@ export interface JobRequestSkillSummary {
      */
     'is_active'?: boolean;
     /**
-     * Skill display name (resolved to the request locale).
+     * Skill display name (canonical; skill names carry no locale translations, so this is NOT resolved to the request locale).
      * @type {string}
      * @memberof JobRequestSkillSummary
      */

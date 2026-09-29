@@ -21,6 +21,12 @@
  */
 export interface JobRequestEmergencyPreviewRequest {
     /**
+     * Place this P0 outside working hours / approved time-off — you have phoned the technician and they agreed. Drops the non-working-day rejection; the response then carries an AFTER_HOURS warning. Double-booking, service area, required skills and the lead-tier rule still reject.
+     * @type {boolean}
+     * @memberof JobRequestEmergencyPreviewRequest
+     */
+    'after_hours_override'?: boolean;
+    /**
      * Fate of displaced jobs: reschedule (default — pushed to later windows) or reassign (handed to another feasible technician at their ORIGINAL time; no-capacity jobs fall back to reschedule).
      * @type {string}
      * @memberof JobRequestEmergencyPreviewRequest
@@ -39,7 +45,7 @@ export interface JobRequestEmergencyPreviewRequest {
      */
     'mode': JobRequestEmergencyPreviewRequestModeEnum;
     /**
-     * Desired start — business-local naive datetime, no offset. Must be in the future.
+     * Desired start — business-local wall clock. Seconds may be omitted and a space may replace the T; an offset is accepted only when it agrees with the business timezone (a disagreeing one is refused with JOB_REQUEST_INVALID_INPUT rather than guessed). Must be in the future.
      * @type {string}
      * @memberof JobRequestEmergencyPreviewRequest
      */

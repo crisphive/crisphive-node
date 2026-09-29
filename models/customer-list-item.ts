@@ -51,6 +51,12 @@ export interface CustomerListItem {
      */
     'request_count'?: number;
     /**
+     * True when the customer has explicitly consented to receive SMS.
+     * @type {boolean}
+     * @memberof CustomerListItem
+     */
+    'sms_opt_in'?: boolean;
+    /**
      * Lifecycle status.
      * @type {string}
      * @memberof CustomerListItem

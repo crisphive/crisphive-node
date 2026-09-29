@@ -39,6 +39,12 @@ export interface ServiceArea {
      */
     'city'?: string;
     /**
+     * Country for the area. Empty if unused.
+     * @type {string}
+     * @memberof ServiceArea
+     */
+    'country'?: string;
+    /**
      * County for the area. Empty if unused.
      * @type {string}
      * @memberof ServiceArea
@@ -80,6 +86,12 @@ export interface ServiceArea {
      * @memberof ServiceArea
      */
     'postal_code'?: string;
+    /**
+     * State / province for the area. Empty if unused.
+     * @type {string}
+     * @memberof ServiceArea
+     */
+    'state_province'?: string;
     /**
      * When the service area was last modified (RFC3339).
      * @type {string}

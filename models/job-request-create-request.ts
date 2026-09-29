@@ -42,7 +42,7 @@ export interface JobRequestCreateRequest {
      */
     'job_dates': Array<JobRequestJobDateRequest>;
     /**
-     * UUID of the job type to classify this job. Optional; null leaves the job unclassified.
+     * UUID of the job type to classify this job. Optional: omitted, the business\'s DEFAULT job type (`is_default`, the seeded \"General\") is used, so every new job has a type and can be quoted from its default duration.
      * @type {string}
      * @memberof JobRequestCreateRequest
      */

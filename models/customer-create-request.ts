@@ -42,7 +42,7 @@ export interface CustomerCreateRequest {
      */
     'full_name': string;
     /**
-     * Phone number. Optional, but at least one of phone/email is required; 10–20 chars.
+     * Phone number in E.164 international format: a leading `+` and the country code, e.g. `+16135550188`. A bare national number (`6135550188`) is REJECTED with PHONE_INVALID — there is no default region to guess the country from. Separators (spaces, dashes, parentheses) are stripped before validation. Optional, but at least one of phone/email is required; 10–20 chars.
      * @type {string}
      * @memberof CustomerCreateRequest
      */
@@ -59,6 +59,12 @@ export interface CustomerCreateRequest {
      * @memberof CustomerCreateRequest
      */
     'service_area_id'?: string;
+    /**
+     * SMS consent: set true ONLY when the customer explicitly agreed to receive SMS (e.g. ticked a non-pre-checked consent box, or gave verbal/written consent you keep a record of). SMS notifications are suppressed while false.
+     * @type {boolean}
+     * @memberof CustomerCreateRequest
+     */
+    'sms_opt_in'?: boolean;
     /**
      * Loyalty tier. Defaults to \"regular\" if omitted.
      * @type {string}

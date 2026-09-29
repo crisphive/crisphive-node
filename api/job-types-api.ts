@@ -22,7 +22,13 @@ import { DUMMY_BASE_URL, assertParamExists, setApiKeyToObject, setBasicAuthToObj
 // @ts-ignore
 import { BASE_PATH, COLLECTION_FORMATS, type RequestArgs, BaseAPI, RequiredError, operationServerMap } from '../base';
 // @ts-ignore
+import type { CreateJobType200Response } from '../models';
+// @ts-ignore
 import type { GetJobType200Response } from '../models';
+// @ts-ignore
+import type { JobTypeCreateRequest } from '../models';
+// @ts-ignore
+import type { JobTypeUpdateRequest } from '../models';
 // @ts-ignore
 import type { ListJobTypes200Response } from '../models';
 // @ts-ignore
@@ -33,6 +39,88 @@ import type { ResponseEnvelope } from '../models';
  */
 export const JobTypesApiAxiosParamCreator = function (configuration?: Configuration) {
     return {
+        /**
+         * Creates a kind of work customers can book, such as \"Annual boiler service\" or \"Drain unblocking\". Job types classify bookings: createJobRequest takes an optional `job_type_id` from this catalog and the job keeps the type\'s name as it was at booking time.  `name` is the only required field and must be unique in the business (JOB_TYPE_DUPLICATE). `status` defaults to active. An inactive type stays in the catalog but cannot be chosen for new job requests; use that rather than deleting a type you may revive.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retried call replays the original response instead of creating a duplicate type.  Optional default_duration_minutes (+ default_mobilization_minutes / default_demobilization_minutes) set how long this kind of work usually takes: quoteJobRequest uses them when it is sent no job_duration_minutes, so an automation or voice agent can schedule the job without knowing the length. A buffer needs a duration (JOB_TYPE_INVALID_DEFAULT_DURATION).  This defines the catalog, not a booking. To book actual work use createJobRequest and reference the job type there.
+         * @summary Add a job type to the catalog
+         * @param {JobTypeCreateRequest} jobTypeCreateRequest Job type
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createJobType: async (jobTypeCreateRequest: JobTypeCreateRequest, idempotencyKey?: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'jobTypeCreateRequest' is not null or undefined
+            assertParamExists('createJobType', 'jobTypeCreateRequest', jobTypeCreateRequest)
+            const localVarPath = `/job-types`;
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'POST', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            if (idempotencyKey != null) {
+                localVarHeaderParameter['Idempotency-Key'] = String(idempotencyKey);
+            }
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(jobTypeCreateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * Soft-deletes the entry: it disappears from the catalog and can no longer be selected for new bookings. Jobs already booked against it are unaffected and keep showing the name they were booked with.  Prefer updateJobType with `status=inactive` in almost every case: it has the same effect on the booking form and is trivially reversible. Delete is for a type created in error or one that will never return.  Rows the platform ships with (`is_system=true`) cannot be deleted and are refused with JOB_TYPE_SYSTEM_READ_ONLY.
+         * @summary Remove a job type from the catalog
+         * @param {string} id Job Type ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteJobType: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('deleteJobType', 'id', id)
+            const localVarPath = `/job-types/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
         /**
          * Returns one entry of the business\'s service catalog (job/work-order type) with its localized display name — e.g. an HVAC tune-up, drain cleaning or electrical inspection offering.
          * @summary Get a job type
@@ -110,6 +198,50 @@ export const JobTypesApiAxiosParamCreator = function (configuration?: Configurat
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * Edits a catalog entry in place. A rename applies to NEW bookings only: every job stores the job-type name it was booked with, so existing and completed jobs keep their original label.  Partial update: omit a field to keep it. `name` rejects \"\" because a type must stay identifiable, and must stay unique (JOB_TYPE_DUPLICATE). Setting `status` to inactive is the reversible way to take a type off the booking form; inactive types are refused for new job requests.  Default quote bundle: default_duration_minutes / default_mobilization_minutes / default_demobilization_minutes follow the same partial rule; omit to keep, 0 to clear, a value to set. Clearing the duration while a buffer stays is refused (JOB_TYPE_INVALID_DEFAULT_DURATION).  Rows the platform ships with (`is_system=true`, e.g. the default \"General\" type) keep their name and status read-only (JOB_TYPE_SYSTEM_READ_ONLY); their default quote bundle IS editable. Create your own type if you need different wording.
+         * @summary Rename a job type or change its availability
+         * @param {string} id Job Type ID
+         * @param {JobTypeUpdateRequest} jobTypeUpdateRequest Job type
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateJobType: async (id: string, jobTypeUpdateRequest: JobTypeUpdateRequest, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('updateJobType', 'id', id)
+            // verify required parameter 'jobTypeUpdateRequest' is not null or undefined
+            assertParamExists('updateJobType', 'jobTypeUpdateRequest', jobTypeUpdateRequest)
+            const localVarPath = `/job-types/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'PUT', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+            localVarRequestOptions.data = serializeDataIfNeeded(jobTypeUpdateRequest, localVarRequestOptions, configuration)
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -120,6 +252,33 @@ export const JobTypesApiAxiosParamCreator = function (configuration?: Configurat
 export const JobTypesApiFp = function(configuration?: Configuration) {
     const localVarAxiosParamCreator = JobTypesApiAxiosParamCreator(configuration)
     return {
+        /**
+         * Creates a kind of work customers can book, such as \"Annual boiler service\" or \"Drain unblocking\". Job types classify bookings: createJobRequest takes an optional `job_type_id` from this catalog and the job keeps the type\'s name as it was at booking time.  `name` is the only required field and must be unique in the business (JOB_TYPE_DUPLICATE). `status` defaults to active. An inactive type stays in the catalog but cannot be chosen for new job requests; use that rather than deleting a type you may revive.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retried call replays the original response instead of creating a duplicate type.  Optional default_duration_minutes (+ default_mobilization_minutes / default_demobilization_minutes) set how long this kind of work usually takes: quoteJobRequest uses them when it is sent no job_duration_minutes, so an automation or voice agent can schedule the job without knowing the length. A buffer needs a duration (JOB_TYPE_INVALID_DEFAULT_DURATION).  This defines the catalog, not a booking. To book actual work use createJobRequest and reference the job type there.
+         * @summary Add a job type to the catalog
+         * @param {JobTypeCreateRequest} jobTypeCreateRequest Job type
+         * @param {string} [idempotencyKey] Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async createJobType(jobTypeCreateRequest: JobTypeCreateRequest, idempotencyKey?: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<CreateJobType200Response>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.createJobType(jobTypeCreateRequest, idempotencyKey, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobTypesApi.createJobType']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
+         * Soft-deletes the entry: it disappears from the catalog and can no longer be selected for new bookings. Jobs already booked against it are unaffected and keep showing the name they were booked with.  Prefer updateJobType with `status=inactive` in almost every case: it has the same effect on the booking form and is trivially reversible. Delete is for a type created in error or one that will never return.  Rows the platform ships with (`is_system=true`) cannot be deleted and are refused with JOB_TYPE_SYSTEM_READ_ONLY.
+         * @summary Remove a job type from the catalog
+         * @param {string} id Job Type ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteJobType(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteJobType(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobTypesApi.deleteJobType']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
         /**
          * Returns one entry of the business\'s service catalog (job/work-order type) with its localized display name — e.g. an HVAC tune-up, drain cleaning or electrical inspection offering.
          * @summary Get a job type
@@ -146,6 +305,20 @@ export const JobTypesApiFp = function(configuration?: Configuration) {
             const localVarOperationServerBasePath = operationServerMap['JobTypesApi.listJobTypes']?.[localVarOperationServerIndex]?.url;
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
+        /**
+         * Edits a catalog entry in place. A rename applies to NEW bookings only: every job stores the job-type name it was booked with, so existing and completed jobs keep their original label.  Partial update: omit a field to keep it. `name` rejects \"\" because a type must stay identifiable, and must stay unique (JOB_TYPE_DUPLICATE). Setting `status` to inactive is the reversible way to take a type off the booking form; inactive types are refused for new job requests.  Default quote bundle: default_duration_minutes / default_mobilization_minutes / default_demobilization_minutes follow the same partial rule; omit to keep, 0 to clear, a value to set. Clearing the duration while a buffer stays is refused (JOB_TYPE_INVALID_DEFAULT_DURATION).  Rows the platform ships with (`is_system=true`, e.g. the default \"General\" type) keep their name and status read-only (JOB_TYPE_SYSTEM_READ_ONLY); their default quote bundle IS editable. Create your own type if you need different wording.
+         * @summary Rename a job type or change its availability
+         * @param {string} id Job Type ID
+         * @param {JobTypeUpdateRequest} jobTypeUpdateRequest Job type
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async updateJobType(id: string, jobTypeUpdateRequest: JobTypeUpdateRequest, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.updateJobType(id, jobTypeUpdateRequest, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['JobTypesApi.updateJobType']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
     }
 };
 
@@ -156,6 +329,26 @@ export const JobTypesApiFp = function(configuration?: Configuration) {
 export const JobTypesApiFactory = function (configuration?: Configuration, basePath?: string, axios?: AxiosInstance) {
     const localVarFp = JobTypesApiFp(configuration)
     return {
+        /**
+         * Creates a kind of work customers can book, such as \"Annual boiler service\" or \"Drain unblocking\". Job types classify bookings: createJobRequest takes an optional `job_type_id` from this catalog and the job keeps the type\'s name as it was at booking time.  `name` is the only required field and must be unique in the business (JOB_TYPE_DUPLICATE). `status` defaults to active. An inactive type stays in the catalog but cannot be chosen for new job requests; use that rather than deleting a type you may revive.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retried call replays the original response instead of creating a duplicate type.  Optional default_duration_minutes (+ default_mobilization_minutes / default_demobilization_minutes) set how long this kind of work usually takes: quoteJobRequest uses them when it is sent no job_duration_minutes, so an automation or voice agent can schedule the job without knowing the length. A buffer needs a duration (JOB_TYPE_INVALID_DEFAULT_DURATION).  This defines the catalog, not a booking. To book actual work use createJobRequest and reference the job type there.
+         * @summary Add a job type to the catalog
+         * @param {JobTypesApiCreateJobTypeRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        createJobType(requestParameters: JobTypesApiCreateJobTypeRequest, options?: RawAxiosRequestConfig): AxiosPromise<CreateJobType200Response> {
+            return localVarFp.createJobType(requestParameters.jobTypeCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
+        },
+        /**
+         * Soft-deletes the entry: it disappears from the catalog and can no longer be selected for new bookings. Jobs already booked against it are unaffected and keep showing the name they were booked with.  Prefer updateJobType with `status=inactive` in almost every case: it has the same effect on the booking form and is trivially reversible. Delete is for a type created in error or one that will never return.  Rows the platform ships with (`is_system=true`) cannot be deleted and are refused with JOB_TYPE_SYSTEM_READ_ONLY.
+         * @summary Remove a job type from the catalog
+         * @param {JobTypesApiDeleteJobTypeRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteJobType(requestParameters: JobTypesApiDeleteJobTypeRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.deleteJobType(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
         /**
          * Returns one entry of the business\'s service catalog (job/work-order type) with its localized display name — e.g. an HVAC tune-up, drain cleaning or electrical inspection offering.
          * @summary Get a job type
@@ -176,8 +369,53 @@ export const JobTypesApiFactory = function (configuration?: Configuration, baseP
         listJobTypes(requestParameters: JobTypesApiListJobTypesRequest = {}, options?: RawAxiosRequestConfig): AxiosPromise<ListJobTypes200Response> {
             return localVarFp.listJobTypes(requestParameters.status, options).then((request) => request(axios, basePath));
         },
+        /**
+         * Edits a catalog entry in place. A rename applies to NEW bookings only: every job stores the job-type name it was booked with, so existing and completed jobs keep their original label.  Partial update: omit a field to keep it. `name` rejects \"\" because a type must stay identifiable, and must stay unique (JOB_TYPE_DUPLICATE). Setting `status` to inactive is the reversible way to take a type off the booking form; inactive types are refused for new job requests.  Default quote bundle: default_duration_minutes / default_mobilization_minutes / default_demobilization_minutes follow the same partial rule; omit to keep, 0 to clear, a value to set. Clearing the duration while a buffer stays is refused (JOB_TYPE_INVALID_DEFAULT_DURATION).  Rows the platform ships with (`is_system=true`, e.g. the default \"General\" type) keep their name and status read-only (JOB_TYPE_SYSTEM_READ_ONLY); their default quote bundle IS editable. Create your own type if you need different wording.
+         * @summary Rename a job type or change its availability
+         * @param {JobTypesApiUpdateJobTypeRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        updateJobType(requestParameters: JobTypesApiUpdateJobTypeRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.updateJobType(requestParameters.id, requestParameters.jobTypeUpdateRequest, options).then((request) => request(axios, basePath));
+        },
     };
 };
+
+/**
+ * Request parameters for createJobType operation in JobTypesApi.
+ * @export
+ * @interface JobTypesApiCreateJobTypeRequest
+ */
+export interface JobTypesApiCreateJobTypeRequest {
+    /**
+     * Job type
+     * @type {JobTypeCreateRequest}
+     * @memberof JobTypesApiCreateJobType
+     */
+    readonly jobTypeCreateRequest: JobTypeCreateRequest
+
+    /**
+     * Unique key making retries safe: a repeat send with the same key replays the original response (header Idempotent-Replayed: true) instead of re-running the operation. Reusing a key with a different body returns 422 IDEMPOTENCY_KEY_REUSE.
+     * @type {string}
+     * @memberof JobTypesApiCreateJobType
+     */
+    readonly idempotencyKey?: string
+}
+
+/**
+ * Request parameters for deleteJobType operation in JobTypesApi.
+ * @export
+ * @interface JobTypesApiDeleteJobTypeRequest
+ */
+export interface JobTypesApiDeleteJobTypeRequest {
+    /**
+     * Job Type ID
+     * @type {string}
+     * @memberof JobTypesApiDeleteJobType
+     */
+    readonly id: string
+}
 
 /**
  * Request parameters for getJobType operation in JobTypesApi.
@@ -208,12 +446,57 @@ export interface JobTypesApiListJobTypesRequest {
 }
 
 /**
+ * Request parameters for updateJobType operation in JobTypesApi.
+ * @export
+ * @interface JobTypesApiUpdateJobTypeRequest
+ */
+export interface JobTypesApiUpdateJobTypeRequest {
+    /**
+     * Job Type ID
+     * @type {string}
+     * @memberof JobTypesApiUpdateJobType
+     */
+    readonly id: string
+
+    /**
+     * Job type
+     * @type {JobTypeUpdateRequest}
+     * @memberof JobTypesApiUpdateJobType
+     */
+    readonly jobTypeUpdateRequest: JobTypeUpdateRequest
+}
+
+/**
  * JobTypesApi - object-oriented interface
  * @export
  * @class JobTypesApi
  * @extends {BaseAPI}
  */
 export class JobTypesApi extends BaseAPI {
+    /**
+     * Creates a kind of work customers can book, such as \"Annual boiler service\" or \"Drain unblocking\". Job types classify bookings: createJobRequest takes an optional `job_type_id` from this catalog and the job keeps the type\'s name as it was at booking time.  `name` is the only required field and must be unique in the business (JOB_TYPE_DUPLICATE). `status` defaults to active. An inactive type stays in the catalog but cannot be chosen for new job requests; use that rather than deleting a type you may revive.  Send an Idempotency-Key header (the `idempotency_key` argument over MCP) so a retried call replays the original response instead of creating a duplicate type.  Optional default_duration_minutes (+ default_mobilization_minutes / default_demobilization_minutes) set how long this kind of work usually takes: quoteJobRequest uses them when it is sent no job_duration_minutes, so an automation or voice agent can schedule the job without knowing the length. A buffer needs a duration (JOB_TYPE_INVALID_DEFAULT_DURATION).  This defines the catalog, not a booking. To book actual work use createJobRequest and reference the job type there.
+     * @summary Add a job type to the catalog
+     * @param {JobTypesApiCreateJobTypeRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobTypesApi
+     */
+    public createJobType(requestParameters: JobTypesApiCreateJobTypeRequest, options?: RawAxiosRequestConfig) {
+        return JobTypesApiFp(this.configuration).createJobType(requestParameters.jobTypeCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Soft-deletes the entry: it disappears from the catalog and can no longer be selected for new bookings. Jobs already booked against it are unaffected and keep showing the name they were booked with.  Prefer updateJobType with `status=inactive` in almost every case: it has the same effect on the booking form and is trivially reversible. Delete is for a type created in error or one that will never return.  Rows the platform ships with (`is_system=true`) cannot be deleted and are refused with JOB_TYPE_SYSTEM_READ_ONLY.
+     * @summary Remove a job type from the catalog
+     * @param {JobTypesApiDeleteJobTypeRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobTypesApi
+     */
+    public deleteJobType(requestParameters: JobTypesApiDeleteJobTypeRequest, options?: RawAxiosRequestConfig) {
+        return JobTypesApiFp(this.configuration).deleteJobType(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
+    }
+
     /**
      * Returns one entry of the business\'s service catalog (job/work-order type) with its localized display name — e.g. an HVAC tune-up, drain cleaning or electrical inspection offering.
      * @summary Get a job type
@@ -236,6 +519,18 @@ export class JobTypesApi extends BaseAPI {
      */
     public listJobTypes(requestParameters: JobTypesApiListJobTypesRequest = {}, options?: RawAxiosRequestConfig) {
         return JobTypesApiFp(this.configuration).listJobTypes(requestParameters.status, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Edits a catalog entry in place. A rename applies to NEW bookings only: every job stores the job-type name it was booked with, so existing and completed jobs keep their original label.  Partial update: omit a field to keep it. `name` rejects \"\" because a type must stay identifiable, and must stay unique (JOB_TYPE_DUPLICATE). Setting `status` to inactive is the reversible way to take a type off the booking form; inactive types are refused for new job requests.  Default quote bundle: default_duration_minutes / default_mobilization_minutes / default_demobilization_minutes follow the same partial rule; omit to keep, 0 to clear, a value to set. Clearing the duration while a buffer stays is refused (JOB_TYPE_INVALID_DEFAULT_DURATION).  Rows the platform ships with (`is_system=true`, e.g. the default \"General\" type) keep their name and status read-only (JOB_TYPE_SYSTEM_READ_ONLY); their default quote bundle IS editable. Create your own type if you need different wording.
+     * @summary Rename a job type or change its availability
+     * @param {JobTypesApiUpdateJobTypeRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof JobTypesApi
+     */
+    public updateJobType(requestParameters: JobTypesApiUpdateJobTypeRequest, options?: RawAxiosRequestConfig) {
+        return JobTypesApiFp(this.configuration).updateJobType(requestParameters.id, requestParameters.jobTypeUpdateRequest, options).then((request) => request(this.axios, this.basePath));
     }
 }
 

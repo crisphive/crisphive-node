@@ -21,13 +21,19 @@
  */
 export interface JobRequestConfirmRequest {
     /**
+     * AfterHoursOverride (BUSINESS confirm only): schedule this P0 outside the technician\'s working hours or approved time-off — you have phoned them and they agreed. Requires priority p0, a single-person job, and technician_id. Double-booking, service area, required skills and the lead-tier rule still reject. Deliberately NOT a binding-tag rule: gin evaluates tags before the handler, which would make the three AFTER_HOURS codes unreachable.
+     * @type {boolean}
+     * @memberof JobRequestConfirmRequest
+     */
+    'after_hours_override'?: boolean;
+    /**
      * ArrivalWindowMinutes = width (phút) của arrival-window ô khách bấm ở slot-picker (chính là time_slot_step_minutes, mặc định 30). Persist để post-confirm detail render lại đúng window. Optional; bounds ([5, 240], khớp slot-picker step) validate ở usecase — single authority, một error code (JOB_REQUEST_INVALID_INPUT).
      * @type {number}
      * @memberof JobRequestConfirmRequest
      */
     'arrival_window_minutes'?: number;
     /**
-     * Chosen start time — business-local naive datetime, no offset (the business_time.datetime value from the time-segments picker). The server converts to UTC using the job\'s business timezone.
+     * Chosen start time — business-local wall clock (the business_time.datetime value from the time-segments picker), converted to UTC against the job\'s business timezone. Seconds may be omitted and a space may replace the T. An offset is accepted only when it agrees with the business timezone; a disagreeing one is refused with JOB_REQUEST_INVALID_INPUT naming what it means locally.
      * @type {string}
      * @memberof JobRequestConfirmRequest
      */

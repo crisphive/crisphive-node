@@ -117,17 +117,29 @@ export interface Technician {
      */
     'leads'?: Array<TechnicianLeadRef>;
     /**
+     * Set (RFC3339) only when the member RESIGNED themselves; null otherwise.  It is what separates the two meanings of `status: \"deactive\"`: with `left_at` set the member chose to leave (\"Đã nghỉ việc\"), with it null the business suspended them (\"Tạm khoá\"). Render them differently — the roster otherwise shows somebody who resigned exactly like somebody who was disciplined. Cleared when they are reactivated.
+     * @type {string}
+     * @memberof Technician
+     */
+    'left_at'?: string;
+    /**
      * Phone number in the form it was supplied; null if not set.
      * @type {string}
      * @memberof Technician
      */
     'phone'?: string;
     /**
-     * Resolved role/group name (e.g. \"Technician\", \"Owner\").
+     * Resolved role/group name, localized to the request locale (e.g. \"Technician\", \"기술자\").
      * @type {string}
      * @memberof Technician
      */
     'role'?: string;
+    /**
+     * Stable machine key of the role for SYSTEM groups; empty for custom (business-authored) groups. Compare role-specific client behavior against THIS, never against the localized role name.
+     * @type {string}
+     * @memberof Technician
+     */
+    'role_key'?: TechnicianRoleKeyEnum;
     /**
      * Service areas this technician is assigned to (id + name).
      * @type {Array<TechnicianServiceAreaRef>}
@@ -185,6 +197,15 @@ export const TechnicianAssignmentTierEnum = {
 } as const;
 
 export type TechnicianAssignmentTierEnum = typeof TechnicianAssignmentTierEnum[keyof typeof TechnicianAssignmentTierEnum];
+export const TechnicianRoleKeyEnum = {
+    Owner: 'owner',
+    Administrator: 'administrator',
+    BookingCoordinator: 'booking_coordinator',
+    Supervisor: 'supervisor',
+    Technician: 'technician'
+} as const;
+
+export type TechnicianRoleKeyEnum = typeof TechnicianRoleKeyEnum[keyof typeof TechnicianRoleKeyEnum];
 export const TechnicianStartLocationTypeEnum = {
     Home: 'home',
     Office: 'office'
