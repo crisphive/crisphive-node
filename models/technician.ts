@@ -63,6 +63,24 @@ export interface Technician {
      */
     'business_id'?: string;
     /**
+     * Precomputed deadline for the single calendar-connect nudge -- CalendarRequestedAt plus the sweep\'s three-day window -- so the dashboard never has to add three days and guess (the `is_fallback` / `token_stale` convention: the server computes the table state). Omitted, never null, whenever nothing is due: never requested, or already nudged.
+     * @type {string}
+     * @memberof Technician
+     */
+    'calendar_nudge_due_at'?: string;
+    /**
+     * Set (RFC3339) once the one-time unanswered-request reminder has been sent (calendarsync.nudge_sweep); omitted otherwise -- either because the technician answered, or because the three-day window has not elapsed yet. The sweep never nudges twice.
+     * @type {string}
+     * @memberof Technician
+     */
+    'calendar_nudged_at'?: string;
+    /**
+     * Set (RFC3339) when the business asked this technician to connect a personal calendar (calendarsync\'s invite flow, CALENDAR_SYNC_DESIGN.md §5); omitted if never asked. This is the ONLY surface that reports it for a technician who has not yet connected -- calendarsync\'s own connections list has no row for them at all.
+     * @type {string}
+     * @memberof Technician
+     */
+    'calendar_requested_at'?: string;
+    /**
      * When the technician record was created (RFC3339).
      * @type {string}
      * @memberof Technician

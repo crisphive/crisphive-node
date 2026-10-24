@@ -19,6 +19,9 @@ import type { InternalJobrequestHttpAddressReq } from './internal-jobrequest-htt
 // May contain unused imports in some cases
 // @ts-ignore
 import type { JobRequestBookAndConfirmCustomer } from './job-request-book-and-confirm-customer';
+// May contain unused imports in some cases
+// @ts-ignore
+import type { JobRequestBookAndConfirmEmergency } from './job-request-book-and-confirm-emergency';
 
 /**
  * 
@@ -27,7 +30,7 @@ import type { JobRequestBookAndConfirmCustomer } from './job-request-book-and-co
  */
 export interface JobRequestBookAndConfirmRequest {
     /**
-     * Service address. REQUIRED with `customer`; ignored with `customer_id` (the stored customer address is used). Missing coordinates are geocoded.
+     * Service address. REQUIRED with `customer`. OPTIONAL with `customer_id`: when sent it is used for THIS JOB and the stored customer address is only the fallback when it is omitted — it is never written back to the customer record. Missing coordinates are geocoded.
      * @type {InternalJobrequestHttpAddressReq}
      * @memberof JobRequestBookAndConfirmRequest
      */
@@ -45,11 +48,23 @@ export interface JobRequestBookAndConfirmRequest {
      */
     'customer_id'?: string;
     /**
+     * Demobilization (teardown) minutes after the work, min 0 — same rules as mobilization_minutes.
+     * @type {number}
+     * @memberof JobRequestBookAndConfirmRequest
+     */
+    'demobilization_minutes'?: number;
+    /**
      * Free-text description of the work. Optional; max 2000 chars.
      * @type {string}
      * @memberof JobRequestBookAndConfirmRequest
      */
     'description'?: string;
+    /**
+     * P0 dispatch. Present only with priority p0 (or a business whose default priority is p0). See the endpoint description.
+     * @type {JobRequestBookAndConfirmEmergency}
+     * @memberof JobRequestBookAndConfirmRequest
+     */
+    'emergency'?: JobRequestBookAndConfirmEmergency;
     /**
      * Hands-on work minutes. Optional when the job type has a default_duration_minutes.
      * @type {number}
@@ -62,6 +77,12 @@ export interface JobRequestBookAndConfirmRequest {
      * @memberof JobRequestBookAndConfirmRequest
      */
     'job_type_id'?: string;
+    /**
+     * Mobilization (setup/travel-prep) minutes before the work, min 0 — same meaning as on quoteJobRequest. Optional: omitted, the job type\'s default_mobilization_minutes applies when job_duration_minutes is ALSO omitted, and 0 when you sent a duration (an explicit duration is never mixed with the type\'s buffers). A value you send always wins. Counted when checking whether a pinned technician_id is free.
+     * @type {number}
+     * @memberof JobRequestBookAndConfirmRequest
+     */
+    'mobilization_minutes'?: number;
     /**
      * Scheduling priority p0–p3. Optional; omitted = the business default.
      * @type {string}

@@ -39,7 +39,7 @@ export interface JobRequestBookAndConfirmRefusal {
      */
     'message'?: string;
     /**
-     * Which step refused: quote or confirm.
+     * Which step refused: quote, confirm, or dispatch (the P0 cascade).
      * @type {string}
      * @memberof JobRequestBookAndConfirmRefusal
      */
@@ -48,7 +48,8 @@ export interface JobRequestBookAndConfirmRefusal {
 
 export const JobRequestBookAndConfirmRefusalStageEnum = {
     Quote: 'quote',
-    Confirm: 'confirm'
+    Confirm: 'confirm',
+    Dispatch: 'dispatch'
 } as const;
 
 export type JobRequestBookAndConfirmRefusalStageEnum = typeof JobRequestBookAndConfirmRefusalStageEnum[keyof typeof JobRequestBookAndConfirmRefusalStageEnum];

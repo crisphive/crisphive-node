@@ -21,6 +21,9 @@ import type { CustomerContact } from './customer-contact';
 import type { CustomerProfile } from './customer-profile';
 // May contain unused imports in some cases
 // @ts-ignore
+import type { CustomerQuickBooksLink } from './customer-quick-books-link';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { CustomerSpending } from './customer-spending';
 
 /**
@@ -41,6 +44,12 @@ export interface Customer {
      * @memberof Customer
      */
     'profile'?: CustomerProfile;
+    /**
+     * The customer\'s QuickBooks Online counterpart; null when this customer is not linked to one, and for every business without the integration.
+     * @type {CustomerQuickBooksLink}
+     * @memberof Customer
+     */
+    'quickbooks'?: CustomerQuickBooksLink;
     /**
      * Spending aggregates over the trailing 12 months.
      * @type {CustomerSpending}

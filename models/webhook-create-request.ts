@@ -27,7 +27,7 @@ export interface WebhookCreateRequest {
      */
     'description'?: string;
     /**
-     * Event types to receive. Empty = ALL events. See GET /business/webhooks/event-types.
+     * Event types to receive. Empty = every event the credential may READ (customer.* needs customers_view, technician.* team_view, job_request.* job_view); naming one it cannot read is WEBHOOK_EVENT_NOT_PERMITTED. See GET /business/webhooks/event-types.
      * @type {Array<string>}
      * @memberof WebhookCreateRequest
      */

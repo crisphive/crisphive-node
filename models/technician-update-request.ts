@@ -30,7 +30,7 @@ export interface TechnicianUpdateRequest {
      */
     'address'?: TechnicianAddressInput;
     /**
-     * Crew tier: lead / buddy / float (float = excluded from auto crew-assign).
+     * Crew tier: lead / buddy / float (float = excluded from auto crew-assign). IGNORED (stored empty, no error) for Booking Coordinator, Administrator and Viewer — office roles are never assigned jobs, so moving a member into one of them clears the tier.
      * @type {string}
      * @memberof TechnicianUpdateRequest
      */

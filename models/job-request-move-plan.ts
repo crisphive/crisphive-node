@@ -33,6 +33,12 @@ import type { JobRequestRescheduleDay } from './job-request-reschedule-day';
  */
 export interface JobRequestMovePlan {
     /**
+     * True on a PREVIEW that lands a p0 single-person job on a day the business does not work, sent without after_hours_override. The plan is shown as the override would place it; to commit it, ask the coordinator whether they have phoned the technician and send after_hours_override=true. Always false on a commit (a commit without the flag refuses instead).
+     * @type {boolean}
+     * @memberof JobRequestMovePlan
+     */
+    'after_hours_override_required'?: boolean;
+    /**
      * IANA timezone the per-day groupings are rendered in.
      * @type {string}
      * @memberof JobRequestMovePlan

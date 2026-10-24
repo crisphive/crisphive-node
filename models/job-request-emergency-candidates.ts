@@ -51,7 +51,7 @@ export interface JobRequestEmergencyCandidates {
      */
     'emergency_end'?: string;
     /**
-     * ID of the P0 job being placed.
+     * ID of the P0 job being placed. Absent for a probe -- a `job` that does not exist yet.
      * @type {string}
      * @memberof JobRequestEmergencyCandidates
      */

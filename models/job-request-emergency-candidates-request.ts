@@ -13,6 +13,9 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { JobRequestEmergencyInlineJob } from './job-request-emergency-inline-job';
 
 /**
  * 
@@ -27,11 +30,17 @@ export interface JobRequestEmergencyCandidatesRequest {
      */
     'after_hours_override'?: boolean;
     /**
-     * ID of the P0 job to place.
+     * UUID of the P0 job to place. Send this OR `job`, never both and never neither.
      * @type {string}
      * @memberof JobRequestEmergencyCandidatesRequest
      */
-    'emergency_job_id': string;
+    'emergency_job_id'?: string;
+    /**
+     * A job that does not exist yet — the wizard\'s read-only preview before anything is written. Send this OR `emergency_job_id`.
+     * @type {JobRequestEmergencyInlineJob}
+     * @memberof JobRequestEmergencyCandidatesRequest
+     */
+    'job'?: JobRequestEmergencyInlineJob;
     /**
      * Max candidates to return (default 5, max 10).
      * @type {number}

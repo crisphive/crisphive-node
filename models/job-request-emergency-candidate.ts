@@ -33,6 +33,12 @@ export interface JobRequestEmergencyCandidate {
      */
     'booked_minutes'?: number;
     /**
+     * True when this technician overlaps a PERSONAL-calendar window and is offered anyway, flagged and sorted last, for you to decide on. Render it as \"has a personal commitment then — phone them before choosing\", never as a recommendation. The event\'s hours are deliberately NOT disclosed: the platform stores no title and the times are a private commitment.
+     * @type {boolean}
+     * @memberof JobRequestEmergencyCandidate
+     */
+    'calendar_busy'?: boolean;
+    /**
      * The displaced jobs, grouped per business-local day (same shape as the preview endpoint) — what the coordinator reviews before committing.
      * @type {Array<JobRequestRescheduleDay>}
      * @memberof JobRequestEmergencyCandidate
@@ -81,7 +87,7 @@ export interface JobRequestEmergencyCandidate {
      */
     'travel_minutes'?: number;
     /**
-     * Per-technician warnings, e.g. TIME_OFF_OVERLAP when this technician is on approved leave at the requested time (only reachable with after_hours_override, which stops leave from rejecting).
+     * Per-technician warnings: TIME_OFF_OVERLAP when this technician is on approved leave at the requested time (only reachable with after_hours_override, which stops leave from rejecting), and CALENDAR_OVERLAP alongside calendar_busy above.
      * @type {Array<JobRequestMoveWarning>}
      * @memberof JobRequestEmergencyCandidate
      */

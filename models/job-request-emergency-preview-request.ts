@@ -13,6 +13,9 @@
  */
 
 
+// May contain unused imports in some cases
+// @ts-ignore
+import type { JobRequestEmergencyInlineJob } from './job-request-emergency-inline-job';
 
 /**
  * 
@@ -33,11 +36,17 @@ export interface JobRequestEmergencyPreviewRequest {
      */
     'displacement_mode'?: JobRequestEmergencyPreviewRequestDisplacementModeEnum;
     /**
-     * ID of the P0 job to insert.
+     * UUID of the P0 job to insert. Send this OR `job`, never both and never neither.
      * @type {string}
      * @memberof JobRequestEmergencyPreviewRequest
      */
-    'emergency_job_id': string;
+    'emergency_job_id'?: string;
+    /**
+     * A job that does not exist yet — the wizard\'s read-only preview before anything is written. Send this OR `emergency_job_id`.
+     * @type {JobRequestEmergencyInlineJob}
+     * @memberof JobRequestEmergencyPreviewRequest
+     */
+    'job'?: JobRequestEmergencyInlineJob;
     /**
      * Cascade mode: overtime = displaced jobs stay same-day (tech works late); next_day = overflow rolls to the next working day.
      * @type {string}

@@ -18,6 +18,7 @@ export * from './api/business-skill-api';
 export * from './api/customer-api';
 export * from './api/job-request-business-api';
 export * from './api/job-types-api';
+export * from './api/permission-api';
 export * from './api/service-area-api';
 export * from './api/technician-api';
 export * from './api/technician-time-off-api';

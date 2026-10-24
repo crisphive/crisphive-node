@@ -30,7 +30,7 @@ export interface TechnicianCreateRequest {
      */
     'address'?: TechnicianAddressInput;
     /**
-     * Crew tier the matching engine assigns by: lead (can head a job), buddy (crew helper), float (excluded from auto crew-assign).
+     * Crew tier the matching engine assigns by: lead (can head a job), buddy (crew helper), float (excluded from auto crew-assign). IGNORED — stored empty, no error — when the role is Booking Coordinator, Administrator or Viewer: office roles are never assigned jobs. Technician, Owner, Supervisor and custom roles keep the tier.
      * @type {string}
      * @memberof TechnicianCreateRequest
      */
@@ -42,11 +42,11 @@ export interface TechnicianCreateRequest {
      */
     'buddy_ids'?: Array<string>;
     /**
-     * Role group for the new member. Discover IDs via GET /permission/groups (Owner/Administrator groups are rejected in sandbox mode).
+     * Role group for the new member. Optional: omitted or empty assigns the business\'s Technician group. To assign another group, copy its ID from the dashboard (Settings → Permissions) or from an existing member\'s `business_group_id`. Owner/Administrator groups are rejected in sandbox mode and for API-key callers.
      * @type {string}
      * @memberof TechnicianCreateRequest
      */
-    'business_group_id': string;
+    'business_group_id'?: string;
     /**
      * Email address. At least one of phone/email is required (identity resolution key).
      * @type {string}

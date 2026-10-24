@@ -80,6 +80,44 @@ export const TechnicianTimeOffApiAxiosParamCreator = function (configuration?: C
             };
         },
         /**
+         * Removes a time-off record, in ANY status (pending, approved, rejected or cancelled). This is the \"the technician can come in after all\" call: once an approved record is deleted the technician is bookable again in that window for NEW bookings and schedule moves. It does NOT move any job back — jobs that `commitAbsenceResolve` already re-assigned to other technicians stay where they are (their customers may already have been told), and a job flagged as needing attention when the record was created keeps that flag until it is moved or re-assigned. To give the technician work again, book or move jobs onto them explicitly. The record is soft-deleted (it no longer appears in `GET /technicians/{id}/time-off`); deleting it again answers `TIME_OFF_NOT_FOUND`. A sandbox (`chsk_test_`) key can only delete sandbox records — a live record id answers `TIME_OFF_NOT_FOUND`, and the reverse holds for a live key.
+         * @summary Delete a technician\'s time off (e.g. back from a sick day)
+         * @param {string} id Time Off ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTechnicianTimeOff: async (id: string, options: RawAxiosRequestConfig = {}): Promise<RequestArgs> => {
+            // verify required parameter 'id' is not null or undefined
+            assertParamExists('deleteTechnicianTimeOff', 'id', id)
+            const localVarPath = `/technician-time-off/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            // use dummy base URL string because the URL constructor only accepts absolute URLs.
+            const localVarUrlObj = new URL(localVarPath, DUMMY_BASE_URL);
+            let baseOptions;
+            if (configuration) {
+                baseOptions = configuration.baseOptions;
+            }
+
+            const localVarRequestOptions = { method: 'DELETE', ...baseOptions, ...options};
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+
+            // authentication ApiKeyAuth required
+            // http bearer authentication required
+            await setBearerAuthToObject(localVarHeaderParameter, configuration)
+
+
+    
+            setSearchParams(localVarUrlObj, localVarQueryParameter);
+            let headersFromBaseOptions = baseOptions && baseOptions.headers ? baseOptions.headers : {};
+            localVarRequestOptions.headers = {...localVarHeaderParameter, ...headersFromBaseOptions, ...options.headers};
+
+            return {
+                url: toPathString(localVarUrlObj),
+                options: localVarRequestOptions,
+            };
+        },
+        /**
          * Returns the technician\'s time-off records (pending, approved, rejected, cancelled), paginated, optionally bounded by start_date/end_date (YYYY-MM-DD, inclusive overlap) and status. Read this before recording a new block (overlaps are refused) and to see whether an absence is already recorded before `commitAbsenceResolve`.
          * @summary List time off for a specific technician
          * @param {string} id Technician ID
@@ -177,6 +215,19 @@ export const TechnicianTimeOffApiFp = function(configuration?: Configuration) {
             return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
         },
         /**
+         * Removes a time-off record, in ANY status (pending, approved, rejected or cancelled). This is the \"the technician can come in after all\" call: once an approved record is deleted the technician is bookable again in that window for NEW bookings and schedule moves. It does NOT move any job back — jobs that `commitAbsenceResolve` already re-assigned to other technicians stay where they are (their customers may already have been told), and a job flagged as needing attention when the record was created keeps that flag until it is moved or re-assigned. To give the technician work again, book or move jobs onto them explicitly. The record is soft-deleted (it no longer appears in `GET /technicians/{id}/time-off`); deleting it again answers `TIME_OFF_NOT_FOUND`. A sandbox (`chsk_test_`) key can only delete sandbox records — a live record id answers `TIME_OFF_NOT_FOUND`, and the reverse holds for a live key.
+         * @summary Delete a technician\'s time off (e.g. back from a sick day)
+         * @param {string} id Time Off ID
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        async deleteTechnicianTimeOff(id: string, options?: RawAxiosRequestConfig): Promise<(axios?: AxiosInstance, basePath?: string) => AxiosPromise<ResponseEnvelope>> {
+            const localVarAxiosArgs = await localVarAxiosParamCreator.deleteTechnicianTimeOff(id, options);
+            const localVarOperationServerIndex = configuration?.serverIndex ?? 0;
+            const localVarOperationServerBasePath = operationServerMap['TechnicianTimeOffApi.deleteTechnicianTimeOff']?.[localVarOperationServerIndex]?.url;
+            return (axios, basePath) => createRequestFunction(localVarAxiosArgs, globalAxios, BASE_PATH, configuration)(axios, localVarOperationServerBasePath || basePath);
+        },
+        /**
          * Returns the technician\'s time-off records (pending, approved, rejected, cancelled), paginated, optionally bounded by start_date/end_date (YYYY-MM-DD, inclusive overlap) and status. Read this before recording a new block (overlaps are refused) and to see whether an absence is already recorded before `commitAbsenceResolve`.
          * @summary List time off for a specific technician
          * @param {string} id Technician ID
@@ -217,6 +268,16 @@ export const TechnicianTimeOffApiFactory = function (configuration?: Configurati
             return localVarFp.createTechnicianTimeOff(requestParameters.technicianTimeOffCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(axios, basePath));
         },
         /**
+         * Removes a time-off record, in ANY status (pending, approved, rejected or cancelled). This is the \"the technician can come in after all\" call: once an approved record is deleted the technician is bookable again in that window for NEW bookings and schedule moves. It does NOT move any job back — jobs that `commitAbsenceResolve` already re-assigned to other technicians stay where they are (their customers may already have been told), and a job flagged as needing attention when the record was created keeps that flag until it is moved or re-assigned. To give the technician work again, book or move jobs onto them explicitly. The record is soft-deleted (it no longer appears in `GET /technicians/{id}/time-off`); deleting it again answers `TIME_OFF_NOT_FOUND`. A sandbox (`chsk_test_`) key can only delete sandbox records — a live record id answers `TIME_OFF_NOT_FOUND`, and the reverse holds for a live key.
+         * @summary Delete a technician\'s time off (e.g. back from a sick day)
+         * @param {TechnicianTimeOffApiDeleteTechnicianTimeOffRequest} requestParameters Request parameters.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteTechnicianTimeOff(requestParameters: TechnicianTimeOffApiDeleteTechnicianTimeOffRequest, options?: RawAxiosRequestConfig): AxiosPromise<ResponseEnvelope> {
+            return localVarFp.deleteTechnicianTimeOff(requestParameters.id, options).then((request) => request(axios, basePath));
+        },
+        /**
          * Returns the technician\'s time-off records (pending, approved, rejected, cancelled), paginated, optionally bounded by start_date/end_date (YYYY-MM-DD, inclusive overlap) and status. Read this before recording a new block (overlaps are refused) and to see whether an absence is already recorded before `commitAbsenceResolve`.
          * @summary List time off for a specific technician
          * @param {TechnicianTimeOffApiListTechnicianTimeOffRequest} requestParameters Request parameters.
@@ -248,6 +309,20 @@ export interface TechnicianTimeOffApiCreateTechnicianTimeOffRequest {
      * @memberof TechnicianTimeOffApiCreateTechnicianTimeOff
      */
     readonly idempotencyKey?: string
+}
+
+/**
+ * Request parameters for deleteTechnicianTimeOff operation in TechnicianTimeOffApi.
+ * @export
+ * @interface TechnicianTimeOffApiDeleteTechnicianTimeOffRequest
+ */
+export interface TechnicianTimeOffApiDeleteTechnicianTimeOffRequest {
+    /**
+     * Time Off ID
+     * @type {string}
+     * @memberof TechnicianTimeOffApiDeleteTechnicianTimeOff
+     */
+    readonly id: string
 }
 
 /**
@@ -330,6 +405,18 @@ export class TechnicianTimeOffApi extends BaseAPI {
      */
     public createTechnicianTimeOff(requestParameters: TechnicianTimeOffApiCreateTechnicianTimeOffRequest, options?: RawAxiosRequestConfig) {
         return TechnicianTimeOffApiFp(this.configuration).createTechnicianTimeOff(requestParameters.technicianTimeOffCreateRequest, requestParameters.idempotencyKey, options).then((request) => request(this.axios, this.basePath));
+    }
+
+    /**
+     * Removes a time-off record, in ANY status (pending, approved, rejected or cancelled). This is the \"the technician can come in after all\" call: once an approved record is deleted the technician is bookable again in that window for NEW bookings and schedule moves. It does NOT move any job back — jobs that `commitAbsenceResolve` already re-assigned to other technicians stay where they are (their customers may already have been told), and a job flagged as needing attention when the record was created keeps that flag until it is moved or re-assigned. To give the technician work again, book or move jobs onto them explicitly. The record is soft-deleted (it no longer appears in `GET /technicians/{id}/time-off`); deleting it again answers `TIME_OFF_NOT_FOUND`. A sandbox (`chsk_test_`) key can only delete sandbox records — a live record id answers `TIME_OFF_NOT_FOUND`, and the reverse holds for a live key.
+     * @summary Delete a technician\'s time off (e.g. back from a sick day)
+     * @param {TechnicianTimeOffApiDeleteTechnicianTimeOffRequest} requestParameters Request parameters.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof TechnicianTimeOffApi
+     */
+    public deleteTechnicianTimeOff(requestParameters: TechnicianTimeOffApiDeleteTechnicianTimeOffRequest, options?: RawAxiosRequestConfig) {
+        return TechnicianTimeOffApiFp(this.configuration).deleteTechnicianTimeOff(requestParameters.id, options).then((request) => request(this.axios, this.basePath));
     }
 
     /**

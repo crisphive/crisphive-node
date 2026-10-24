@@ -15,6 +15,9 @@
 
 // May contain unused imports in some cases
 // @ts-ignore
+import type { JobRequestBookAndConfirmEmergencyResult } from './job-request-book-and-confirm-emergency-result';
+// May contain unused imports in some cases
+// @ts-ignore
 import type { JobRequestBookAndConfirmRefusal } from './job-request-book-and-confirm-refusal';
 
 /**
@@ -47,6 +50,12 @@ export interface JobRequestBookAndConfirmResponse {
      * @memberof JobRequestBookAndConfirmResponse
      */
     'customer_url'?: string;
+    /**
+     * The P0 dispatch, echoed back. Present whenever the request carried `emergency`.
+     * @type {JobRequestBookAndConfirmEmergencyResult}
+     * @memberof JobRequestBookAndConfirmResponse
+     */
+    'emergency'?: JobRequestBookAndConfirmEmergencyResult;
     /**
      * The job that was created. Present on every 200 — once booked, a job is never discarded.
      * @type {string}

@@ -33,6 +33,12 @@ import type { JobRequestRescheduleReassignment } from './job-request-reschedule-
  */
 export interface JobRequestEmergencyPlan {
     /**
+     * True on a PREVIEW onto a day the business does not work, sent without after_hours_override. The cascade is shown as the override would place it; to commit, confirm the coordinator has phoned the technician and send after_hours_override=true. Always false on a commit.
+     * @type {boolean}
+     * @memberof JobRequestEmergencyPlan
+     */
+    'after_hours_override_required'?: boolean;
+    /**
      * IANA timezone the per-day groupings are rendered in.
      * @type {string}
      * @memberof JobRequestEmergencyPlan
@@ -51,7 +57,7 @@ export interface JobRequestEmergencyPlan {
      */
     'emergency_end'?: string;
     /**
-     * ID of the inserted P0 job.
+     * ID of the inserted P0 job. Absent for a probe -- a `job` that does not exist yet.
      * @type {string}
      * @memberof JobRequestEmergencyPlan
      */
